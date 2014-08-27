@@ -23,13 +23,15 @@ You can scan a source file for headers recursively using `polysquare_scan_source
  2. If the source file including the header is a C source, then the header will unconditionally be marked as a C header.
  3. If, when scanning the header, certain indicators such as `__cplusplus` or any of the indicators specified in `CPP_IDENTIFIERS` were found, then the header is set to C and C++
 
-    polysquare_scan_source_for_headers (SOURCE my_source.c
-                                        INCLUDES ${INCLUDE_DIRECTORIES}
-                                        CPP_IDENTIFIERS MY_SOURCE_IS_COMPILING_CXX)
+See, for example:
+
+    polysquare_scan_source_for_headers (SOURCE my_source.c INCLUDES /path/to/include/dir CPP_IDENTIFIERS MY_SOURCE_IS_COMPILING_CXX)
 
 Getting the language of any source
 ----------------------------------
 Once sources have been scanned for header files, their language can be obtained with `polysquare_determine_language_from_source`. If this function is used on a header which was not part of an already scanned source, then a fatal error will result.
+
+See, for example:
 
     polysquare_determine_language_from_source (my_header.h LANGUAGE WAS_HEADER)
 
