@@ -5,7 +5,7 @@ CMake macro to determine the language of a header file.
 
 Status
 ======
-[![Build Status](https://travis-ci.org/polysquare/cpp-subprocess.svg?branch=master)](https://travis-ci.org/polysquare/cpp-subprocess)
+[![Build Status](https://travis-ci.org/polysquare/cmake-determine-header-language.svg?branch=master)](https://travis-ci.org/polysquare/cmake-determine-header-language)
 
 Description
 ===========
