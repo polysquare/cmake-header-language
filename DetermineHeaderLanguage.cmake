@@ -347,13 +347,13 @@ function (polysquare_determine_language_for_source SOURCE
 
     if (NOT WAS_HEADER)
 
-        set (${SOURCE_WAS_HEADER_RETURN} FALSE)
+        set (${SOURCE_WAS_HEADER_RETURN} FALSE PARENT_SCOPE)
         set (${LANGUAGE_RETURN} ${LANGUAGE} PARENT_SCOPE)
         return ()
 
     else (NOT WAS_HEADER)
 
-        set (${SOURCE_WAS_HEADER_RETURN} TRUE)
+        set (${SOURCE_WAS_HEADER_RETURN} TRUE PARENT_SCOPE)
 
         # This is a header file - we need to look up in the list
         # of header files to determine what language this header
