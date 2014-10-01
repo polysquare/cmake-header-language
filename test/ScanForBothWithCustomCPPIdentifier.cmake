@@ -59,19 +59,38 @@ set (C_SOURCE_FILE_CONTENTS
      "}\n"
      "\n")
 
+set (CXX_SOURCE_FILE
+     ${CMAKE_CURRENT_BINARY_DIR}/CPPSource.cpp)
+set (CXX_SOURCE_FILE_CONTENTS
+     "\#include <c/both.h>\n"
+     "\#include <c/c.h>\n"
+     "int main (void)\n"
+     "{\n"
+     "    struct MyThing myThing = { 1 }\;\n"
+     "    return myThing.dataMember\;\n"
+     "}\n"
+     "\n")
+
 file (MAKE_DIRECTORY ${INCLUDE_DIRECTORY})
 file (MAKE_DIRECTORY ${C_HEADER_FILE_DIRECTORY})
 
 file (WRITE ${C_SOURCE_FILE} ${C_SOURCE_FILE_CONTENTS})
+file (WRITE ${CXX_SOURCE_FILE} ${CXX_SOURCE_FILE_CONTENTS})
 file (WRITE ${C_HEADER_FILE} ${C_HEADER_FILE_CONTENTS})
 file (WRITE ${BOTH_HEADER_FILE} ${BOTH_HEADER_FILE_CONTENTS})
 file (WRITE ${DECLS_HEADER_FILE} ${DECLS_HEADER_FILE_CONTENTS})
 
+polysquare_scan_source_for_headers (SOURCE ${CXX_SOURCE_FILE}
+                                    INCLUDES ${INCLUDE_DIRECTORY}
+                                    CPP_IDENTIFIERS
+                                    POLYSQUARE_BEGIN_DECLS
+                                    POLYSQUARE_IS_CPP)
+
 polysquare_scan_source_for_headers (SOURCE ${C_SOURCE_FILE}
-                             INCLUDES ${INCLUDE_DIRECTORY}
-                             CPP_IDENTIFIERS
-                             POLYSQUARE_BEGIN_DECLS
-                             POLYSQUARE_IS_CPP)
+                                    INCLUDES ${INCLUDE_DIRECTORY}
+                                    CPP_IDENTIFIERS
+                                    POLYSQUARE_BEGIN_DECLS
+                                    POLYSQUARE_IS_CPP)
 
 polysquare_determine_language_for_source (${BOTH_HEADER_FILE}
                                           LANGUAGE WAS_HEADER)

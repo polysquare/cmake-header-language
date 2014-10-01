@@ -31,6 +31,24 @@ function (_psq_get_absolute_path_to_header_file_language ABSOLUTE_PATH_TO_HEADER
     if (HEADER_FILE_LANGUAGE_SET)
 
         get_property (HEADER_FILE_LANGUAGE GLOBAL PROPERTY "${MAP_KEY}")
+
+        # If it is just C, check our _CPPCHECK_HAS_CXX_TOKENS_MAP_ to see
+        # if this is actually a mixed mode header.
+        if (HEADER_FILE_LANGUAGE STREQUAL "C")
+
+            set (MIXED_MODE_MAP_KEY
+                 "_CPPCHECK_HAS_CXX_TOKENS_MAP_${ABSOLUTE_PATH_TO_HEADER}")
+            get_property (IS_MIXED_MODE GLOBAL PROPERTY
+                          "${MIXED_MODE_MAP_KEY}")
+
+            if (IS_MIXED_MODE)
+
+                list (APPEND HEADER_FILE_LANGUAGE "CXX")
+
+            endif (IS_MIXED_MODE)
+
+        endif (HEADER_FILE_LANGUAGE STREQUAL "C")
+
         set (${LANGUAGE} ${HEADER_FILE_LANGUAGE} PARENT_SCOPE)
         return ()
 
@@ -223,15 +241,10 @@ function (polysquare_scan_source_for_headers)
 
     _psq_language_from_source (${SCAN_SOURCE} LANGUAGE WAS_HEADER)
 
-    # If we are scanning a header file right now, then if the current
-    # language is "C", we need to check now while reading it for other headers
-    # for CXX tokens too.
-    set (SCAN_FOR_CXX_IDENTIFIERS FALSE)
-    if (WAS_HEADER AND LANGUAGE STREQUAL "C")
-
-        set (SCAN_FOR_CXX_IDENTIFIERS TRUE)
-
-    endif (WAS_HEADER AND LANGUAGE STREQUAL "C")
+    # If we are scanning a header file right now, the we need to check now
+    # while reading it for other headers for CXX tokens too. If there are
+    # CXX tokens, we'll keep it in our special _CPPCHECK_HAS_CXX_TOKENS_MAP_
+    set (SCAN_FOR_CXX_IDENTIFIERS ${WAS_HEADER})
 
     foreach (LINE ${SOURCE_CONTENTS})
 
@@ -300,9 +313,8 @@ function (polysquare_scan_source_for_headers)
 
                 if (LINE MATCHES "^.*${IDENTIFIER}")
 
-                    set (MAP_KEY "_CPPCHECK_H_MAP_${SCAN_SOURCE}")
-                    set_property (GLOBAL PROPERTY "${MAP_KEY}"
-                                                  "C;CXX")
+                    set (MAP_KEY "_CPPCHECK_HAS_CXX_TOKENS_MAP_${SCAN_SOURCE}")
+                    set_property (GLOBAL PROPERTY "${MAP_KEY}" TRUE)
                     set (SCAN_FOR_CXX_IDENTIFIERS FALSE)
 
                 endif (LINE MATCHES "^.*${IDENTIFIER}")
