@@ -137,17 +137,18 @@ function (_psq_process_include_statement_path INCLUDE_PATH UPDATE_HEADERS)
             set (MAP_KEY "_CPPCHECK_H_MAP_${ABSOLUTE_PATH}")
             set (UPDATE_HEADER_IN_MAP FALSE)
 
+            list (FIND HEADER_LANGUAGE "C" C_INDEX)
+
             if (DEFINED HEADER_LANGUAGE AND
-                NOT HEADER_LANGUAGE STREQUAL "C")
+                C_INDEX EQUAL -1)
 
                 list (APPEND HEADERS_TO_UPDATE_LIST "${ABSOLUTE_PATH}")
 
-            elseif (NOT DEFINED HEADER_LANGUAGE)
+            elseif (NOT DEFINED HEADER_LANGUAGE AND C_INDEX EQUAL -1)
 
                 list (APPEND HEADERS_TO_UPDATE_LIST "${ABSOLUTE_PATH}")
 
-            endif (DEFINED HEADER_LANGUAGE AND
-                   NOT HEADER_LANGUAGE STREQUAL "C")
+            endif (DEFINED HEADER_LANGUAGE AND C_INDEX EQUAL -1)
 
         endif (EXISTS ${ABSOLUTE_PATH} OR HEADER_IS_GENERATED)
 
