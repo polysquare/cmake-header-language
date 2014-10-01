@@ -40,6 +40,7 @@ bootstrap_cmake_unit (INITIAL_CACHE_CONTENTS
 add_cmake_test (CheckTransientIncludesForLanguage)
 add_cmake_test (CheckForCAndCPPWhereHeaderHasIfdefCPlusPlus)
 add_cmake_test (ScanForBothWithCustomCPPIdentifier)
+add_cmake_test (ScanForBothWithCustomCPPIdentifierAndCSourceFirst)
 add_cmake_test (BreakIncludeCyclesWhenScanningForHeaders)
 add_cmake_test (DetectLanguageOfGeneratedHeader)
 add_cmake_test (DetectCLanguageForHeaders)
