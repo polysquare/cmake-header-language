@@ -62,18 +62,14 @@ function (_psq_language_from_source SOURCE
                                     RETURN_LANGUAGE
                                     SOURCE_WAS_HEADER_RETURN)
 
+    cmake_parse_arguments (LANG_FROM_SOURCE
+                           ""
+                           "FORCE_LANGUAGE"
+                           ""
+                           ${ARGN})
+
     set (${SOURCE_WAS_HEADER_RETURN} FALSE PARENT_SCOPE)
-    set (${RETURN_LANGUAGE} "" PARENT_SCOPE)
-
-    get_property (LANGUAGE SOURCE ${SOURCE} PROPERTY SET_LANGUAGE)
-
-    # User overrode the LANGUAGE property, use that.
-    if (DEFINED SET_LANGUAGE)
-
-       set (${LANGUAGE} ${SET_LANGUAGE} PARENT_SCOPE)
-       return ()
-
-    endif (DEFINED SET_LANGUAGE)
+    set (_RETURN_LANGUAGE "")
 
     # Try and detect the language based on the file's extension
     get_filename_component (EXTENSION ${SOURCE} EXT)
@@ -83,8 +79,7 @@ function (_psq_language_from_source SOURCE
 
     if (NOT C_INDEX EQUAL -1)
 
-        set (${RETURN_LANGUAGE} "C" PARENT_SCOPE)
-        return ()
+        set (_RETURN_LANGUAGE "C")
 
     endif (NOT C_INDEX EQUAL -1)
 
@@ -92,17 +87,42 @@ function (_psq_language_from_source SOURCE
 
     if (NOT CXX_INDEX EQUAL -1)
 
-        set (${RETURN_LANGUAGE} "CXX" PARENT_SCOPE)
-        return ()
+        set (_RETURN_LANGUAGE "CXX")
 
     endif ()
 
-    # Couldn't find source langauge from either extension or property.
-    # We might be scanning a header so check the header maps for a language
-    set (LANGUAGE "")
-    _psq_get_absolute_path_to_header_file_language (${SOURCE} LANGUAGE)
-    set (${RETURN_LANGUAGE} ${LANGUAGE} PARENT_SCOPE)
-    set (${SOURCE_WAS_HEADER_RETURN} TRUE PARENT_SCOPE)
+    # This is a header
+    if (NOT _RETURN_LANGUAGE)
+
+        set (${SOURCE_WAS_HEADER_RETURN} TRUE PARENT_SCOPE)
+        # Couldn't find source langauge from either extension or property.
+        # We might be scanning a header so check the header maps for a language
+        set (LANGUAGE "")
+        _psq_get_absolute_path_to_header_file_language (${SOURCE} LANGUAGE)
+        set (_RETURN_LANGUAGE ${LANGUAGE})
+
+    endif (NOT _RETURN_LANGUAGE)
+
+    # Override language based on option here after we've scanned everything
+    # and worked out if this was a header or not
+    if (LANG_FROM_SOURCE_FORCE_LANGUAGE)
+
+        set (_RETURN_LANGUAGE ${LANG_FROM_SOURCE_FORCE_LANGUAGE})
+
+    else (LANG_FROM_SOURCE_FORCE_LANGUAGE)
+
+        get_property (LANGUAGE SOURCE ${SOURCE} PROPERTY SET_LANGUAGE)
+
+        # User overrode the LANGUAGE property, use that.
+        if (DEFINED SET_LANGUAGE)
+
+           set (_RETURN_LANGUAGE ${SET_LANGUAGE})
+
+        endif (DEFINED SET_LANGUAGE)
+
+    endif (LANG_FROM_SOURCE_FORCE_LANGUAGE)
+
+    set (${RETURN_LANGUAGE} ${_RETURN_LANGUAGE} PARENT_SCOPE)
 
 endfunction () 
 
@@ -345,6 +365,8 @@ endfunction ()
 # SOURCE_WAS_HEADER_RETURN: A variable where a boolean variable, indicating
 #                           whether this was a header or a source that was
 #                           checked.
+# [Optional] FORCE_LANGUAGE: Performs scanning, but forces language to be one
+#                            of C or CXX.
 function (polysquare_determine_language_for_source SOURCE
                                                    LANGUAGE_RETURN
                                                    SOURCE_WAS_HEADER_RETURN)
@@ -352,19 +374,30 @@ function (polysquare_determine_language_for_source SOURCE
     set (DETERMINE_LANG_MULTIVAR_ARGS INCLUDES)
     cmake_parse_arguments (DETERMINE_LANG
                            ""
-                           ""
+                           "FORCE_LANGUAGE"
                            "${DETERMINE_LANG_MULTIVAR_ARGS}"
                            ${ARGN})
 
-    _psq_language_from_source (${SOURCE} LANGUAGE WAS_HEADER)
+    if (DETERMINE_LANG_FORCE_LANGUAGE)
 
-    if (NOT WAS_HEADER)
+        set (LANG_FROM_SOURCE_FORCE_LANGUAGE_OPT
+             FORCE_LANGUAGE ${DETERMINE_LANG_FORCE_LANGUAGE})
 
-        set (${SOURCE_WAS_HEADER_RETURN} FALSE PARENT_SCOPE)
+    endif (DETERMINE_LANG_FORCE_LANGUAGE)
+
+    _psq_language_from_source (${SOURCE} LANGUAGE WAS_HEADER
+                               ${LANG_FROM_SOURCE_FORCE_LANGUAGE_OPT})
+    set (${SOURCE_WAS_HEADER_RETURN} ${WAS_HEADER} PARENT_SCOPE)
+
+    # If it wasn't a header or language was forced, then the answer
+    # we got back was the authority. There's no need to check for
+    # mixed mode headers or the like.
+    if (NOT WAS_HEADER OR DETERMINE_LANG_FORCE_LANGUAGE)
+
         set (${LANGUAGE_RETURN} ${LANGUAGE} PARENT_SCOPE)
         return ()
 
-    else (NOT WAS_HEADER)
+    else (NOT WAS_HEADER OR DETERMINE_LANG_FORCE_LANGUAGE)
 
         set (${SOURCE_WAS_HEADER_RETURN} TRUE PARENT_SCOPE)
 
@@ -418,7 +451,7 @@ function (polysquare_determine_language_for_source SOURCE
         set (${LANGUAGE_RETURN} ${HEADER_LANGUAGE} PARENT_SCOPE)
         return ()
 
-    endif (NOT WAS_HEADER)
+    endif (NOT WAS_HEADER OR DETERMINE_LANG_FORCE_LANGUAGE)
 
     message (FATAL_ERROR "This section should not be reached")
 
