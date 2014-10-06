@@ -424,11 +424,10 @@ function (polysquare_determine_language_for_source SOURCE
                                " this header file in at least one source "
                                " file and add that source file to a "
                                " target and scan it using "
-                               " cppcheck_target_sources or "
-                               " cppcheck_sources OR pass the "
-                               " FORCE_LANGUAGE option to either of those "
-                               " two functions where the header will be "
-                               " included.")
+                               " polysquare_scan_source_for_headers or specify"
+                               " the FORCE_LANGUAGE option to the call to"
+                               " polysquare_determine_language_for_source where"
+                               " the header will be included in the arguments.")
 
             set (ERROR_MESSAGE "${ERROR_MESSAGE}\n The following sources have "
                                "been scanned for includes:\n")
