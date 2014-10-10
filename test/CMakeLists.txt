@@ -20,22 +20,22 @@ get_filename_component (POLYSQUARE_HL_CMAKE_DIRECTORY
 set (CMAKE_UNIT_DIRECTORY
      ${POLYSQUARE_HL_CMAKE_DIRECTORY}/cmake-unit)
 
-set (CPPCHECK_INITIAL_CACHE_CONTENTS
-     "set (POLYSQUARE_HL_CMAKE_DIRECTORY\n"
-     "     ${POLYSQUARE_HL_CMAKE_DIRECTORY}\n"
-     "     CACHE STRING \"\" FORCE)\n"
-     "set (POLYSQUARE_HL_CMAKE_TESTS_DIRECTORY\n"
-     "     ${CMAKE_UNIT_DIRECTORY}\n"
-     "     CACHE STRING \"\" FORCE)\n")
-
 set (CMAKE_MODULE_PATH
      ${CMAKE_UNIT_DIRECTORY}
+     ${POLYSQUARE_HL_CMAKE_DIRECTORY}
      ${CMAKE_MODULE_PATH})
+
+foreach (PATH ${CMAKE_MODULE_PATH})
+     set (POLYSQUARE_INITIAL_CACHE_CONTENTS
+          "${POLYSQUARE_INITIAL_CACHE_CONTENTS}\n"
+          "set (CMAKE_MODULE_PATH ${PATH} \${CMAKE_MODULE_PATH}\n"
+          "     CACHE STRING \"\" FORCE)\n")
+endforeach ()
 
 include (CMakeUnitRunner)
 
 bootstrap_cmake_unit (INITIAL_CACHE_CONTENTS
-                      CPPCHECK_INITIAL_CACHE_CONTENTS)
+                      POLYSQUARE_INITIAL_CACHE_CONTENTS)
 
 add_cmake_test (CheckTransientIncludesForLanguage)
 add_cmake_test (CheckForCAndCPPWhereHeaderHasIfdefCPlusPlus)

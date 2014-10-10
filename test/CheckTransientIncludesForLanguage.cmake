@@ -14,8 +14,8 @@
 #
 # See LICENCE.md for Copyright Information.
 
-include (${POLYSQUARE_HL_CMAKE_DIRECTORY}/DetermineHeaderLanguage.cmake)
-include (${POLYSQUARE_HL_CMAKE_TESTS_DIRECTORY}/CMakeUnit.cmake)
+include (DetermineHeaderLanguage)
+include (CMakeUnit)
 
 set (INCLUDE_DIRECTORY
      ${CMAKE_CURRENT_BINARY_DIR}/include)
