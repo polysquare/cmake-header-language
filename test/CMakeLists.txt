@@ -25,17 +25,9 @@ set (CMAKE_MODULE_PATH
      ${POLYSQUARE_HL_CMAKE_DIRECTORY}
      ${CMAKE_MODULE_PATH})
 
-foreach (PATH ${CMAKE_MODULE_PATH})
-     set (POLYSQUARE_INITIAL_CACHE_CONTENTS
-          "${POLYSQUARE_INITIAL_CACHE_CONTENTS}\n"
-          "set (CMAKE_MODULE_PATH ${PATH} \${CMAKE_MODULE_PATH}\n"
-          "     CACHE STRING \"\" FORCE)\n")
-endforeach ()
-
 include (CMakeUnitRunner)
 
-bootstrap_cmake_unit (INITIAL_CACHE_CONTENTS
-                      POLYSQUARE_INITIAL_CACHE_CONTENTS)
+bootstrap_cmake_unit (VARIABLES CMAKE_MODULE_PATH)
 
 add_cmake_test (CheckTransientIncludesForLanguage)
 add_cmake_test (CheckForCAndCPPWhereHeaderHasIfdefCPlusPlus)
