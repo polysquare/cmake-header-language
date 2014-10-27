@@ -43,4 +43,4 @@ polysquare_scan_source_for_headers (SOURCE ${C_SOURCE_FILE}
 polysquare_determine_language_for_source (${C_HEADER_FILE}
                                           LANGUAGE WAS_HEADER)
 
-assert_variable_is (${LANGUAGE} STRING EQUAL "C")
+assert_variable_is (LANGUAGE STRING EQUAL "C")
