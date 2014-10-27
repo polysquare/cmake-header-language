@@ -12,7 +12,7 @@ function (_psq_get_absolute_path_to_header_file_language ABSOLUTE_PATH_TO_HEADER
                                                          LANGUAGE)
 
     # ABSOLUTE_PATH is a GLOBAL property
-    # called "_CPPCHECK_H_MAP_" + ABSOLUTE_PATH.
+    # called "_PSQ_DETERMINE_LANG_LANGUAGE_" + ABSOLUTE_PATH.
     # We can't address it immediately by that name though,
     # because CMake properties and variables can only be
     # addressed by certain characters, however, internally,
@@ -25,36 +25,26 @@ function (_psq_get_absolute_path_to_header_file_language ABSOLUTE_PATH_TO_HEADER
     # and pass the string directly to the internal
     # implementation of "set", which sets the string
     # as the key value
-    set (MAP_KEY "_CPPCHECK_H_MAP_${ABSOLUTE_PATH_TO_HEADER}")
-    get_property (HEADER_FILE_LANGUAGE_SET GLOBAL PROPERTY "${MAP_KEY}" SET)
+    set (MAP_KEY "_PSQ_DETERMINE_LANG_LANGUAGE_${ABSOLUTE_PATH_TO_HEADER}")
+    set (HEADER_FILE_LANGUAGE "${${MAP_KEY}}")
 
-    if (HEADER_FILE_LANGUAGE_SET)
+    # If it is just C, check our _PSQ_DETERMINE_LANG_HAS_CXX_TOKENS_ to see
+    # if this is actually a mixed mode header.
+    if ("${HEADER_FILE_LANGUAGE}" STREQUAL "C")
 
-        get_property (HEADER_FILE_LANGUAGE GLOBAL PROPERTY "${MAP_KEY}")
+        set (MIXED_MODE_MAP_KEY
+             "_PSQ_DETERMINE_LANG_HAS_CXX_TOKENS_${ABSOLUTE_PATH_TO_HEADER}")
+        set (IS_MIXED_MODE "${${MIXED_MODE_MAP_KEY}}")
 
-        # If it is just C, check our _CPPCHECK_HAS_CXX_TOKENS_MAP_ to see
-        # if this is actually a mixed mode header.
-        if (HEADER_FILE_LANGUAGE STREQUAL "C")
+        if (IS_MIXED_MODE)
 
-            set (MIXED_MODE_MAP_KEY
-                 "_CPPCHECK_HAS_CXX_TOKENS_MAP_${ABSOLUTE_PATH_TO_HEADER}")
-            get_property (IS_MIXED_MODE GLOBAL PROPERTY
-                          "${MIXED_MODE_MAP_KEY}")
+            list (APPEND HEADER_FILE_LANGUAGE "CXX")
 
-            if (IS_MIXED_MODE)
+        endif (IS_MIXED_MODE)
 
-                list (APPEND HEADER_FILE_LANGUAGE "CXX")
+    endif ("${HEADER_FILE_LANGUAGE}" STREQUAL "C")
 
-            endif (IS_MIXED_MODE)
-
-        endif (HEADER_FILE_LANGUAGE STREQUAL "C")
-
-        set (${LANGUAGE} ${HEADER_FILE_LANGUAGE} PARENT_SCOPE)
-        return ()
-
-    endif (HEADER_FILE_LANGUAGE_SET)
-
-    return ()
+    set (${LANGUAGE} ${HEADER_FILE_LANGUAGE} PARENT_SCOPE)
 
 endfunction ()
 
@@ -198,7 +188,8 @@ function (_psq_language_from_source SOURCE
 
 endfunction () 
 
-function (_psq_process_include_statement_path INCLUDE_PATH UPDATE_HEADERS)
+function (_psq_process_include_statement_path INCLUDE_PATH
+                                              UPDATE_HEADERS_RETURN)
 
     set (HEADERS_TO_UPDATE_LIST)
     set (PROCESS_MULTIVAR_ARGS INCLUDES)
@@ -226,9 +217,6 @@ function (_psq_process_include_statement_path INCLUDE_PATH UPDATE_HEADERS)
             _psq_get_absolute_path_to_header_file_language (${ABSOLUTE_PATH}
                                                             HEADER_LANGUAGE)
 
-            set (MAP_KEY "_CPPCHECK_H_MAP_${ABSOLUTE_PATH}")
-            set (UPDATE_HEADER_IN_MAP FALSE)
-
             list (FIND HEADER_LANGUAGE "C" C_INDEX)
 
             if (DEFINED HEADER_LANGUAGE AND
@@ -246,7 +234,7 @@ function (_psq_process_include_statement_path INCLUDE_PATH UPDATE_HEADERS)
 
     endforeach ()
 
-    set (${UPDATE_HEADERS} ${HEADERS_TO_UPDATE_LIST} PARENT_SCOPE)
+    set (${UPDATE_HEADERS_RETURN} ${HEADERS_TO_UPDATE_LIST} PARENT_SCOPE)
 
 endfunction ()
 
@@ -285,7 +273,8 @@ function (polysquare_scan_source_for_headers)
 
     if (NOT DEFINED SCAN_SOURCE)
 
-        message (FATAL_ERROR "SOURCE ${SCAN_SOURCE} must be set to use this function")
+        message (FATAL_ERROR "SOURCE ${SCAN_SOURCE} must be "
+                             "set to use this function")
 
     endif (NOT DEFINED SCAN_SOURCE)
 
@@ -325,96 +314,140 @@ function (polysquare_scan_source_for_headers)
     set_property (GLOBAL APPEND PROPERTY _CPPCHECK_ALREADY_SCANNED_SOURCES
                   ${SCAN_SOURCE})
 
-    # Open the source file and read its contents
-    file (READ ${SCAN_SOURCE} SOURCE_CONTENTS)
+    set (HEADER_PATHS_MAP_KEY "_PSQ_DETERMINE_LANG_HEADERS_${SCAN_SOURCE}")
+    set (HAS_CXX_TOKENS_MAP_KEY
+         "_PSQ_DETERMINE_LANG_HAS_CXX_TOKENS_${SCAN_SOURCE}")
+    set (SCANNED_CXX_TOKENS_MAP_KEY
+         "_PSQ_DETERMINE_LANG_SCANNED_CXX_TOKENS_${SCAN_SOURCE}")
+    set (FILE_TIMESTAMP_MAP_KEY
+         "_PSQ_DETERMINE_LANG_SCAN_TIMESTAMP_${SCAN_SOURCE}")
 
-    # Split the read contents into lines, using ; as the delimiter
-    string (REGEX REPLACE ";" "\\\\;" SOURCE_CONTENTS "${SOURCE_CONTENTS}")
-    string (REGEX REPLACE "\n" ";" SOURCE_CONTENTS "${SOURCE_CONTENTS}")
+    # Check the source file's timestamp and then check it against what we have
+    # in the cache. If it is different, or CPP_IDENTIFIERS are different, then
+    # we need to re-scan this file
+    file (TIMESTAMP ${SCAN_SOURCE} FILE_TIMESTAMP)
 
-    _psq_language_from_source (${SCAN_SOURCE} LANGUAGE WAS_HEADER)
+    if (NOT "${FILE_TIMESTAMP}" STREQUAL "${${FILE_TIMESTAMP_MAP_KEY}}" OR
+        NOT "${CPP_IDENTIFIERS}" STREQUAL "${${SCANNED_CXX_TOKENS_MAP_KEY}}")
 
-    # If we are scanning a header file right now, the we need to check now
-    # while reading it for other headers for CXX tokens too. If there are
-    # CXX tokens, we'll keep it in our special _CPPCHECK_HAS_CXX_TOKENS_MAP_
-    set (SCAN_FOR_CXX_IDENTIFIERS ${WAS_HEADER})
+        set ("${FILE_TIMESTAMP_MAP_KEY}"
+             "${FILE_TIMESTAMP}" CACHE INTERNAL "" FORCE)
 
-    foreach (LINE ${SOURCE_CONTENTS})
+        # Open the source file and read its contents
+        file (READ ${SCAN_SOURCE} SOURCE_CONTENTS)
+        message ("READ ${SCAN_SOURCE}")
 
-        # This is an #include statement, check what is within it
-        if (LINE MATCHES "^.*\#include.*[<\"].*[>\"]")
+        # Split the read contents into lines, using ; as the delimiter
+        string (REGEX REPLACE ";" "\\\\;" SOURCE_CONTENTS "${SOURCE_CONTENTS}")
+        string (REGEX REPLACE "\n" ";" SOURCE_CONTENTS "${SOURCE_CONTENTS}")
 
-            # Start with ${LINE}
-            set (HEADER ${LINE})
+        _psq_language_from_source (${SCAN_SOURCE} LANGUAGE WAS_HEADER)
 
-            # Trim out the beginning and end of the include statement
-            # Because CMake doesn't support non-greedy expressions (eg "?")
-            # we need to match based on indices and not using REGEX REPLACE
-            # so we need to use REGEX MATCH to get the first match and then
-            # FIND to get the index.
-            string (REGEX MATCH "[<\"]" PATH_START "${HEADER}")
-            string (FIND "${HEADER}" "${PATH_START}" PATH_START_INDEX)
-            math (EXPR PATH_START_INDEX "${PATH_START_INDEX} + 1")
-            string (SUBSTRING "${HEADER}" ${PATH_START_INDEX} -1 HEADER)
+        # If we are scanning a header file right now, the we need to check now
+        # while reading it for other headers for CXX tokens too. If there are
+        # CXX tokens, we'll keep it in our special
+        # _PSQ_DETERMINE_LANG_HAS_CXX_TOKENS_
+        set (SCAN_FOR_CXX_IDENTIFIERS ${WAS_HEADER})
 
-            string (REGEX MATCH "[>\"]" PATH_END "${HEADER}")
-            string (FIND "${HEADER}" "${PATH_END}" PATH_END_INDEX)
-            string (SUBSTRING "${HEADER}" 0 ${PATH_END_INDEX} HEADER)
+        foreach (LINE ${SOURCE_CONTENTS})
 
-            string (STRIP ${HEADER} HEADER)
+            # This is an #include statement, check what is within it
+            if (LINE MATCHES "^.*\#include.*[<\"].*[>\"]")
 
-            # Check if this include statement has quotes. If it does, then
-            # we should include the current source directory in the include
-            # directory scan.
-            string (FIND "${LINE}" "\"" QUOTE_INDEX)
+                # Start with ${LINE}
+                set (HEADER ${LINE})
 
-            if (NOT QUOTE_INDEX EQUAL -1)
+                # Trim out the beginning and end of the include statement
+                # Because CMake doesn't support non-greedy expressions (eg "?")
+                # we need to match based on indices and not using REGEX REPLACE
+                # so we need to use REGEX MATCH to get the first match and then
+                # FIND to get the index.
+                string (REGEX MATCH "[<\"]" PATH_START "${HEADER}")
+                string (FIND "${HEADER}" "${PATH_START}" PATH_START_INDEX)
+                math (EXPR PATH_START_INDEX "${PATH_START_INDEX} + 1")
+                string (SUBSTRING "${HEADER}" ${PATH_START_INDEX} -1 HEADER)
 
-                list (APPEND SCAN_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR})
+                string (REGEX MATCH "[>\"]" PATH_END "${HEADER}")
+                string (FIND "${HEADER}" "${PATH_END}" PATH_END_INDEX)
+                string (SUBSTRING "${HEADER}" 0 ${PATH_END_INDEX} HEADER)
 
-            endif (NOT QUOTE_INDEX EQUAL -1)
+                string (STRIP ${HEADER} HEADER)
 
-            _psq_process_include_statement_path (${HEADER} UPDATE_HEADERS
-                                                 INCLUDES ${SCAN_INCLUDES})
+                # Check if this include statement has quotes. If it does, then
+                # we should include the current source directory in the include
+                # directory scan.
+                string (FIND "${LINE}" "\"" QUOTE_INDEX)
 
-            # Every correct combination of include-directory to header
-            foreach (HEADER ${UPDATE_HEADERS})
+                if (NOT QUOTE_INDEX EQUAL -1)
 
-                set (MAP_KEY "_CPPCHECK_H_MAP_${HEADER}")
-                set_property (GLOBAL PROPERTY "${MAP_KEY}"
-                                              "${LANGUAGE}")
+                    list (APPEND SCAN_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR})
 
-                # Recursively scan for header more header files
-                # in this one
-                polysquare_scan_source_for_headers (SOURCE ${HEADER}
-                                                    INCLUDES
-                                                    ${SCAN_INCLUDES}
-                                                    CPP_IDENTIFIERS
-                                                    ${SCAN_CPP_IDENTIFIERS})
+                endif (NOT QUOTE_INDEX EQUAL -1)
 
-            endforeach ()
+                _psq_process_include_statement_path (${HEADER} UPDATE_HEADERS
+                                                     INCLUDES ${SCAN_INCLUDES})
 
-       endif (LINE MATCHES "^.*\#include.*[<\"].*[>\"]")
+                # Every correct combination of include-directory to header
+                foreach (HEADER ${UPDATE_HEADERS})
 
-       if (SCAN_FOR_CXX_IDENTIFIERS)
+                    set (LANGUAGE_MAP_KEY
+                         "_PSQ_DETERMINE_LANG_LANGUAGE_${HEADER}")
+                    set ("${LANGUAGE_MAP_KEY}" "${LANGUAGE}"
+                         CACHE INTERNAL "" FORCE)
 
-            list (APPEND SCAN_CPP_IDENTIFIERS
-                  __cplusplus)
-            list (REMOVE_DUPLICATES SCAN_CPP_IDENTIFIERS)
+                    list (FIND "${HEADER_PATHS_MAP_KEY}"
+                          ${HEADER} PATH_TO_SCAN_INDEX)
 
-            foreach (IDENTIFIER ${SCAN_CPP_IDENTIFIERS})
+                    if (PATH_TO_SCAN_INDEX EQUAL -1)
 
-                if (LINE MATCHES "^.*${IDENTIFIER}")
+                        list (APPEND "${HEADER_PATHS_MAP_KEY}" ${HEADER})
+                        set ("${HEADER_PATHS_MAP_KEY}"
+                             "${${HEADER_PATHS_MAP_KEY}}"
+                             CACHE INTERNAL "" FORCE)
 
-                    set (MAP_KEY "_CPPCHECK_HAS_CXX_TOKENS_MAP_${SCAN_SOURCE}")
-                    set_property (GLOBAL PROPERTY "${MAP_KEY}" TRUE)
-                    set (SCAN_FOR_CXX_IDENTIFIERS FALSE)
+                    endif (PATH_TO_SCAN_INDEX EQUAL -1)
 
-                endif (LINE MATCHES "^.*${IDENTIFIER}")
+                endforeach ()
 
-            endforeach ()
+           endif (LINE MATCHES "^.*\#include.*[<\"].*[>\"]")
 
-        endif (SCAN_FOR_CXX_IDENTIFIERS)
+           if (SCAN_FOR_CXX_IDENTIFIERS)
+
+                list (APPEND SCAN_CPP_IDENTIFIERS
+                      __cplusplus)
+                list (REMOVE_DUPLICATES SCAN_CPP_IDENTIFIERS)
+
+                foreach (IDENTIFIER ${SCAN_CPP_IDENTIFIERS})
+
+                    if (LINE MATCHES "^.*${IDENTIFIER}")
+
+                        set ("${HAS_CXX_TOKENS_MAP_KEY}" TRUE
+                             CACHE INTERNAL "" FORCE)
+                        set ("${SCANNED_CXX_TOKENS_MAP_KEY}"
+                             ${SCAN_CPP_IDENTIFIERS}
+                             CACHE INTERNAL "" FORCE)
+                        set (SCAN_FOR_CXX_IDENTIFIERS FALSE)
+
+                    endif (LINE MATCHES "^.*${IDENTIFIER}")
+
+                endforeach ()
+
+            endif (SCAN_FOR_CXX_IDENTIFIERS)
+
+        endforeach ()
+
+    endif (NOT "${FILE_TIMESTAMP}" STREQUAL "${${FILE_TIMESTAMP_MAP_KEY}}" OR
+           NOT "${CPP_IDENTIFIERS}" STREQUAL "${${SCANNED_CXX_TOKENS_MAP_KEY}}")
+
+    foreach (HEADER ${${HEADER_PATHS_MAP_KEY}})
+
+        # Recursively scan for header more header files
+        # in this one
+        polysquare_scan_source_for_headers (SOURCE ${HEADER}
+                                            INCLUDES
+                                            ${SCAN_INCLUDES}
+                                            CPP_IDENTIFIERS
+                                            ${SCAN_CPP_IDENTIFIERS})
 
     endforeach ()
 
@@ -527,4 +560,3 @@ function (polysquare_determine_language_for_source SOURCE
     message (FATAL_ERROR "This section should not be reached")
 
 endfunction ()
-
