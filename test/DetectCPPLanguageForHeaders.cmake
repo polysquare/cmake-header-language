@@ -46,4 +46,4 @@ polysquare_scan_source_for_headers (SOURCE ${CXX_SOURCE_FILE}
 polysquare_determine_language_for_source (${CXX_HEADER_FILE}
                                           LANGUAGE WAS_HEADER)
 
-assert_variable_is (${LANGUAGE} STRING EQUAL "CXX")
+assert_variable_is (LANGUAGE STRING EQUAL "CXX")

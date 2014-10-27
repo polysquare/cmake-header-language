@@ -73,5 +73,5 @@ polysquare_determine_language_for_source (${IMMEDIATE_HEADER_FILE}
                                           IMMEDIATE_LANGUAGE
                                           WAS_HEADER)
 
-assert_variable_is (${IMMEDIATE_LANGUAGE} STRING EQUAL "CXX")
-assert_variable_is (${TOPLEVEL_LANGUAGE} STRING EQUAL "CXX")
+assert_variable_is (IMMEDIATE_LANGUAGE STRING EQUAL "CXX")
+assert_variable_is (TOPLEVEL_LANGUAGE STRING EQUAL "CXX")

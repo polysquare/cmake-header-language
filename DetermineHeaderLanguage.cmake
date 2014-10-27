@@ -58,6 +58,82 @@ function (_psq_get_absolute_path_to_header_file_language ABSOLUTE_PATH_TO_HEADER
 
 endfunction ()
 
+# psq_source_type_from_source_file_extension:
+#
+# Returns the initial type of a source file from its extension. It doesn't
+# properly analyze headers and source inclusions to determine the language
+# of any headers.
+#
+# The type of the source will be set in the variable specified in
+# RETURN_TYPE. Valid values are C_SOURCE, CXX_SOURCE, HEADER and UNKNOWN
+#
+# SOURCE: Source file to scan
+# RETURN_TYPE: Variable to set the source type in
+function (polysquare_source_type_from_source_file_extension SOURCE RETURN_TYPE)
+
+    # HEADER_FILE_ONLY overrides everything else
+    get_property (HEADER_FILE_ONLY
+                  SOURCE ${SOURCE}
+                  PROPERTY HEADER_FILE_ONLY)
+
+    if (HEADER_FILE_ONLY)
+
+        set (${RETURN_TYPE} "HEADER" PARENT_SCOPE)
+        return ()
+
+    endif (HEADER_FILE_ONLY)
+
+    # Try and detect the language based on the file's extension
+    get_filename_component (EXTENSION ${SOURCE} EXT)
+    if (EXTENSION)
+
+        string (SUBSTRING ${EXTENSION} 1 -1 EXTENSION)
+
+        list (FIND CMAKE_C_SOURCE_FILE_EXTENSIONS ${EXTENSION} C_INDEX)
+
+        if (NOT C_INDEX EQUAL -1)
+
+            set (${RETURN_TYPE} "C_SOURCE" PARENT_SCOPE)
+            return ()
+
+        endif (NOT C_INDEX EQUAL -1)
+
+        list (FIND CMAKE_CXX_SOURCE_FILE_EXTENSIONS ${EXTENSION} CXX_INDEX)
+
+        if (NOT CXX_INDEX EQUAL -1)
+
+            set (${RETURN_TYPE} "CXX_SOURCE" PARENT_SCOPE)
+            return ()
+
+        endif (NOT CXX_INDEX EQUAL -1)
+
+        # CMake doesn't provide a list of header file extensions. Here are
+        # some common ones.
+        #
+        # Notably absent are files without an extension. It appears that these
+        # are not used outside the standard library and Qt. There's very
+        # little chance that we will be scanning them.
+        #
+        # If they do need to be scanned, consider having the extensionless
+        # header include a header with an extension and scanning that instead.
+        set (HEADER_EXTENSIONS h hh hpp hxx H HPP h++)
+
+        list (FIND HEADER_EXTENSIONS ${EXTENSION} HEADER_INDEX)
+
+        if (NOT HEADER_INDEX EQUAL -1)
+
+            set (${RETURN_TYPE} "HEADER" PARENT_SCOPE)
+            return ()
+
+        endif (NOT HEADER_INDEX EQUAL -1)
+
+    endif (EXTENSION)
+
+    # If we got to this point, then we don't know, set UNKNOWN
+    set (${RETURN_TYPE} "UNKNOWN" PARENT_SCOPE)
+
+endfunction (polysquare_source_type_from_source_file_extension)
+
 function (_psq_language_from_source SOURCE
                                     RETURN_LANGUAGE
                                     SOURCE_WAS_HEADER_RETURN)
@@ -71,28 +147,17 @@ function (_psq_language_from_source SOURCE
     set (${SOURCE_WAS_HEADER_RETURN} FALSE PARENT_SCOPE)
     set (_RETURN_LANGUAGE "")
 
-    # Try and detect the language based on the file's extension
-    get_filename_component (EXTENSION ${SOURCE} EXT)
-    string (SUBSTRING ${EXTENSION} 1 -1 EXTENSION)
+    polysquare_source_type_from_source_file_extension (${SOURCE} SOURCE_TYPE)
 
-    list (FIND CMAKE_C_SOURCE_FILE_EXTENSIONS ${EXTENSION} C_INDEX)
-
-    if (NOT C_INDEX EQUAL -1)
+    if ("${SOURCE_TYPE}" STREQUAL "C_SOURCE")
 
         set (_RETURN_LANGUAGE "C")
 
-    endif (NOT C_INDEX EQUAL -1)
-
-    list (FIND CMAKE_CXX_SOURCE_FILE_EXTENSIONS ${EXTENSION} CXX_INDEX)
-
-    if (NOT CXX_INDEX EQUAL -1)
+    elseif ("${SOURCE_TYPE}" STREQUAL "CXX_SOURCE")
 
         set (_RETURN_LANGUAGE "CXX")
 
-    endif ()
-
-    # This is a header
-    if (NOT _RETURN_LANGUAGE)
+    elseif ("${SOURCE_TYPE}" STREQUAL "HEADER")
 
         set (${SOURCE_WAS_HEADER_RETURN} TRUE PARENT_SCOPE)
         # Couldn't find source langauge from either extension or property.
@@ -101,7 +166,14 @@ function (_psq_language_from_source SOURCE
         _psq_get_absolute_path_to_header_file_language (${SOURCE} LANGUAGE)
         set (_RETURN_LANGUAGE ${LANGUAGE})
 
-    endif (NOT _RETURN_LANGUAGE)
+    elseif ("${SOURCE_TYPE}" STREQUAL "UNKNOWN")
+
+        message (FATAL_ERROR
+                 "The file ${SOURCE} is not a C or C++ source, and is not a "
+                 "header. It should not be passed to "
+                 "polysquare_scan_source_for_headers")
+
+    endif ("${SOURCE_TYPE}" STREQUAL "C_SOURCE")
 
     # Override language based on option here after we've scanned everything
     # and worked out if this was a header or not
