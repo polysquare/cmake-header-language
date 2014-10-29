@@ -335,7 +335,6 @@ function (polysquare_scan_source_for_headers)
 
         # Open the source file and read its contents
         file (READ ${SCAN_SOURCE} SOURCE_CONTENTS)
-        message ("READ ${SCAN_SOURCE}")
 
         # Split the read contents into lines, using ; as the delimiter
         string (REGEX REPLACE ";" "\\\\;" SOURCE_CONTENTS "${SOURCE_CONTENTS}")
