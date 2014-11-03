@@ -22,12 +22,15 @@ set (CMAKE_UNIT_DIRECTORY
 
 set (CMAKE_MODULE_PATH
      ${CMAKE_UNIT_DIRECTORY}
-     ${POLYSQUARE_HL_CMAKE_DIRECTORY}
-     ${CMAKE_MODULE_PATH})
+     ${POLYSQUARE_HL_CMAKE_DIRECTORY})
 
 include (CMakeUnitRunner)
 
-bootstrap_cmake_unit (VARIABLES CMAKE_MODULE_PATH)
+set (DETERMINE_HEADER_LANGUAGE_FILE
+     "${POLYSQUARE_HL_CMAKE_DIRECTORY}/DetermineHeaderLanguage.cmake")
+bootstrap_cmake_unit (VARIABLES CMAKE_MODULE_PATH
+                      COVERAGE_FILES
+                      "${DETERMINE_HEADER_LANGUAGE_FILE}")
 
 add_cmake_test (CheckTransientIncludesForLanguage)
 add_cmake_test (CheckForCAndCPPWhereHeaderHasIfdefCPlusPlus)

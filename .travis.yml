@@ -1,12 +1,29 @@
 language: cpp
+env:
+  - CMAKE_GENERATOR="Unix Makefiles"
+  - CMAKE_GENERATOR="Ninja"
 before_install:
   - git submodule update --init --recursive
-  - sudo apt-add-repository -y ppa:kalakris/cmake
+  - sudo apt-get -y purge cmake
+  - sudo add-apt-repository -y ppa:kubuntu-ppa/beta
+  - sudo apt-add-repository -y ppa:saiarcot895/chromium-dev
+  - gem install coveralls-lcov;
   - sudo apt-get update -qq
   - sudo apt-get install -qq `cat DEPENDENCIES`
+  - cmake --version
+  # Workaround to get Ninja to display verbose output
+  - if [[ $CMAKE_GENERATOR == "Ninja" ]] ; then
+     echo -e '!#/bin/bash\n/usr/bin/ninja -v $@' > ninja;
+     chmod +x ninja;
+     export PATH=`pwd`:${PATH};
+    fi
 script:
   - mkdir -p test/build
   - pushd test/build
-  - cmake .. &&
-    ctest --output-on-failure &&
-    popd
+  - cmake .. -G "${CMAKE_GENERATOR}" -DCMAKE_UNIT_LOG_COVERAGE=1
+  - ctest --output-on-failure
+  - popd
+after_success:
+  - cmake -DTRACEFILE=test/build/PolysquareCMakeHeaderLanguageTests.trace -DLCOV_OUTPUT=test/build/coverage.info -P cmake-unit/CMakeTraceToLCov.cmake
+  - coveralls-lcov test/build/coverage.info
+  - popd
