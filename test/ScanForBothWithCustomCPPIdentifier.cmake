@@ -1,4 +1,5 @@
 # /test/ScanForBothWithCustomCPPIdentifier.cmake
+#
 # Adds some source files which will be detected as C source files
 # and include a header in them, with ${CMAKE_CURRENT_BINARY_DIR}/include
 # to be used as the include-directory.
@@ -12,87 +13,55 @@
 include (DetermineHeaderLanguage)
 include (CMakeUnit)
 
-set (INCLUDE_DIRECTORY
-     ${CMAKE_CURRENT_BINARY_DIR}/include)
-set (C_HEADER_FILE_DIRECTORY
-     ${INCLUDE_DIRECTORY}/c)
-set (DECLS_HEADER_FILE
-     ${C_HEADER_FILE_DIRECTORY}/decls.h)
-set (DECLS_HEADER_FILE_CONTENTS
-     "\#ifndef DECLS_H\n"
-     "\#define DECLS_H\n"
-     "\#define POLYSQUARE_IS_CPP __cplusplus\n"
-     "\#endif\n"
-     "\n")
+set (INCLUDE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+set (C_HEADER_FILE_DIRECTORY_NAME "c")
+set (DECLS_HEADER_FILE_NAME "${C_HEADER_FILE_DIRECTORY_NAME}/decls.h")
+set (DECLS_HEADER_FILE_PATH "${INCLUDE_DIRECTORY}/${DECLS_HEADER_FILE_NAME}")
+set (BOTH_HEADER_FILE_NAME "${C_HEADER_FILE_DIRECTORY_NAME}/both.h")
+set (BOTH_HEADER_FILE_PATH "${INCLUDE_DIRECTORY}/${BOTH_HEADER_FILE_NAME}")
+set (C_HEADER_FILE_NAME "${C_HEADER_FILE_DIRECTORY}/c.h")
+set (C_HEADER_FILE_PATH "${INCLUDE_DIRECTORY}/${C_HEADER_FILE_NAME}")
 
-set (BOTH_HEADER_FILE
-     ${C_HEADER_FILE_DIRECTORY}/both.h)
-set (BOTH_HEADER_FILE_CONTENTS
-     "\#include <c/decls.h>\n"
-     "\#if POLYSQUARE_IS_CPP\n"
-     "class MyClass\n"
-     "{\n"
-     "    public:\n"
-     "        int dataMember\;\n"
-     "}\;\n"
-     "\#endif\n"
-     "\n")
+set (C_SOURCE_FILE_NAME "CSource.c")
+set (C_SOURCE_FILE_PATH
+     "${CMAKE_CURRENT_SOURCE_DIR}/${C_SOURCE_FILE_NAME}")
+set (CXX_SOURCE_FILE_NAME "CPPSource.cpp")
+set (CXX_SOURCE_FILE_PATH
+     "${CMAKE_CURRENT_SOURCE_DIR}/${CXX_SOURCE_FILE_NAME}")
 
-set (C_HEADER_FILE
-     ${C_HEADER_FILE_DIRECTORY}/c.h)
-set (C_HEADER_FILE_CONTENTS
-     "struct MyThing\n"
-     "{\n"
-     "    int dataMember\;\n"
-     "}\;\n"
-     "\n")
+cmake_unit_create_source_file_before_build (NAME "${DECLS_HEADER_FILE_NAME}"
+                                            DEFINES "POLYSQUARE_IS_CPP")
+cmake_unit_create_source_file_before_build (NAME "${BOTH_HEADER_FILE_NAME}"
+                                            DEFINES "POLYSQUARE_IS_CPP"
+                                            INCLUDES
+                                            "${DECLS_HEADER_FILE_PATH}"
+                                            INCLUDE_DIRECTORIES
+                                            "${INCLUDE_DIRECTORY}")
+cmake_unit_create_source_file_before_build (NAME "${C_HEADER_FILE_NAME}")
+cmake_unit_create_source_file_before_build (NAME "${C_SOURCE_FILE_NAME}"
+                                            INCLUDES
+                                            "${BOTH_HEADER_FILE_PATH}"
+                                            "${C_HEADER_FILE_PATH}"
+                                            INCLUDE_DIRECTORIES
+                                            "${INCLUDE_DIRECTORY}")
+cmake_unit_create_source_file_before_build (NAME "${CXX_SOURCE_FILE_NAME}"
+                                            INCLUDES
+                                            "${BOTH_HEADER_FILE_PATH}"
+                                            "${C_HEADER_FILE_PATH}"
+                                            INCLUDE_DIRECTORIES
+                                            "${INCLUDE_DIRECTORY}")
 
-set (C_SOURCE_FILE
-     ${CMAKE_CURRENT_BINARY_DIR}/CSource.c)
-set (C_SOURCE_FILE_CONTENTS
-     "\#include <c/both.h>\n"
-     "\#include <c/c.h>\n"
-     "int main (void)\n"
-     "{\n"
-     "    struct MyThing myThing = { 1 }\;\n"
-     "    return myThing.dataMember\;\n"
-     "}\n"
-     "\n")
-
-set (CXX_SOURCE_FILE
-     ${CMAKE_CURRENT_BINARY_DIR}/CPPSource.cpp)
-set (CXX_SOURCE_FILE_CONTENTS
-     "\#include <c/both.h>\n"
-     "\#include <c/c.h>\n"
-     "int main (void)\n"
-     "{\n"
-     "    struct MyThing myThing = { 1 }\;\n"
-     "    return myThing.dataMember\;\n"
-     "}\n"
-     "\n")
-
-file (MAKE_DIRECTORY ${INCLUDE_DIRECTORY})
-file (MAKE_DIRECTORY ${C_HEADER_FILE_DIRECTORY})
-
-file (WRITE ${C_SOURCE_FILE} ${C_SOURCE_FILE_CONTENTS})
-file (WRITE ${CXX_SOURCE_FILE} ${CXX_SOURCE_FILE_CONTENTS})
-file (WRITE ${C_HEADER_FILE} ${C_HEADER_FILE_CONTENTS})
-file (WRITE ${BOTH_HEADER_FILE} ${BOTH_HEADER_FILE_CONTENTS})
-file (WRITE ${DECLS_HEADER_FILE} ${DECLS_HEADER_FILE_CONTENTS})
-
-polysquare_scan_source_for_headers (SOURCE ${CXX_SOURCE_FILE}
-                                    INCLUDES ${INCLUDE_DIRECTORY}
+polysquare_scan_source_for_headers (SOURCE "${CXX_SOURCE_FILE_PATH}"
+                                    INCLUDES "${INCLUDE_DIRECTORY}"
                                     CPP_IDENTIFIERS
-                                    POLYSQUARE_BEGIN_DECLS
                                     POLYSQUARE_IS_CPP)
 
-polysquare_scan_source_for_headers (SOURCE ${C_SOURCE_FILE}
-                                    INCLUDES ${INCLUDE_DIRECTORY}
+polysquare_scan_source_for_headers (SOURCE "${C_SOURCE_FILE_PATH}"
+                                    INCLUDES "${INCLUDE_DIRECTORY}"
                                     CPP_IDENTIFIERS
-                                    POLYSQUARE_BEGIN_DECLS
                                     POLYSQUARE_IS_CPP)
 
-polysquare_determine_language_for_source (${BOTH_HEADER_FILE}
+polysquare_determine_language_for_source ("${BOTH_HEADER_FILE_PATH}"
                                           LANGUAGE WAS_HEADER)
 
 assert_list_contains_value (LANGUAGE STRING EQUAL "C")

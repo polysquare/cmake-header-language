@@ -209,9 +209,9 @@ function (_psq_process_include_statement_path INCLUDE_PATH
     foreach (INCLUDE_DIRECTORY ${PROCESS_INCLUDES})
 
         set (RELATIVE_PATH "${INCLUDE_DIRECTORY}/${INCLUDE_PATH}")
-        get_filename_component (ABSOLUTE_PATH ${RELATIVE_PATH} ABSOLUTE)
+        get_filename_component (ABSOLUTE_PATH "${RELATIVE_PATH}" ABSOLUTE)
 
-        get_property (HEADER_IS_GENERATED SOURCE ${ABSOLUTE_PATH}
+        get_property (HEADER_IS_GENERATED SOURCE "${ABSOLUTE_PATH}"
                       PROPERTY GENERATED)
 
         if (EXISTS ${ABSOLUTE_PATH} OR HEADER_IS_GENERATED)
@@ -308,7 +308,7 @@ function (polysquare_scan_source_for_headers)
 
     # We've already scanned this source file in this pass, bail out
     get_property (ALREADY_SCANNED GLOBAL
-                  PROPERTY _CPPCHECK_ALREADY_SCANNED_SOURCES)
+                  PROPERTY _POLYSQUARE_ALREADY_SCANNED_SOURCES)
     list (FIND ALREADY_SCANNED ${SCAN_SOURCE} SOURCE_INDEX)
 
     if (NOT SOURCE_INDEX EQUAL -1)
@@ -317,7 +317,7 @@ function (polysquare_scan_source_for_headers)
 
     endif (NOT SOURCE_INDEX EQUAL -1)
 
-    set_property (GLOBAL APPEND PROPERTY _CPPCHECK_ALREADY_SCANNED_SOURCES
+    set_property (GLOBAL APPEND PROPERTY _POLYSQUARE_ALREADY_SCANNED_SOURCES
                   ${SCAN_SOURCE})
 
     set (HEADER_PATHS_MAP_KEY "_PSQ_DETERMINE_LANG_HEADERS_${SCAN_SOURCE}")
@@ -403,6 +403,8 @@ function (polysquare_scan_source_for_headers)
                     list (FIND "${HEADER_PATHS_MAP_KEY}"
                           ${HEADER} PATH_TO_SCAN_INDEX)
 
+                    # Append the header to the list of headers for this
+                    # source file.
                     if (PATH_TO_SCAN_INDEX EQUAL -1)
 
                         list (APPEND "${HEADER_PATHS_MAP_KEY}" ${HEADER})
@@ -411,6 +413,21 @@ function (polysquare_scan_source_for_headers)
                              CACHE INTERNAL "" FORCE)
 
                     endif (PATH_TO_SCAN_INDEX EQUAL -1)
+
+                    # Append the header to the list of candidate headers
+                    # globally
+                    get_property (CANDIDATE_HEADERS GLOBAL
+                                  PROPERTY _POLYSQUARE_CANDIDATE_HEADERS)
+                    list (FIND CANDIDATE_HEADERS "${HEADER}"
+                          CANDIDATE_HEADER_INDEX)
+
+                    if (CANDIDATE_HEADER_INDEX EQUAL -1)
+
+                        set_property (GLOBAL APPEND PROPERTY
+                                      _POLYSQUARE_CANDIDATE_HEADERS
+                                      "${HEADER}")
+
+                    endif (CANDIDATE_HEADER_INDEX EQUAL -1)
 
                 endforeach ()
 
@@ -543,13 +560,16 @@ function (polysquare_determine_language_for_source SOURCE
                                "been scanned for includes:\n")
 
             get_property (ALREADY_SCANNED GLOBAL PROPERTY
-                          _CPPCHECK_ALREADY_SCANNED_SOURCES)
+                          _POLYSQUARE_ALREADY_SCANNED_SOURCES)
 
             foreach (SOURCE ${ALREADY_SCANNED})
 
                 set (ERROR_MESSAGE "${ERROR_MESSAGE} - ${SOURCE}\n")
 
             endforeach ()
+
+            set (ERROR_MESSAGE "${ERROR_MESSAGE}\n The following headers are "
+                               "marked as potential includes:\n")
 
             message (SEND_ERROR ${ERROR_MESSAGE})
 
