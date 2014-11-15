@@ -2,7 +2,7 @@
 #
 # Adds some source files which will be detected as C source files
 # and include a header in them, with ${CMAKE_CURRENT_BINARY_DIR}/include
-# to be used as the include-directory. 
+# to be used as the include-directory.
 #
 # See LICENCE.md for Copyright Information.
 
