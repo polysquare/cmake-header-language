@@ -1,4 +1,5 @@
 # /test/CheckTransientIncludesForLanguage.cmake
+#
 # Add source and header files in the following include hierarchy:
 # Toplevel.h
 # |
@@ -17,67 +18,40 @@
 include (DetermineHeaderLanguage)
 include (CMakeUnit)
 
-set (INCLUDE_DIRECTORY
-     ${CMAKE_CURRENT_BINARY_DIR}/include)
-set (C_HEADER_FILE_DIRECTORY
-     ${INCLUDE_DIRECTORY}/c)
-set (TOPLEVEL_HEADER_FILE
-     ${C_HEADER_FILE_DIRECTORY}/Toplevel.h)
-set (TOPLEVEL_HEADER_FILE_CONTENTS
-     "\#ifndef TOPLEVEL_H\n"
-     "\#define TOPLEVEL_H\n"
-     "struct MyThing\n"
-     "{\n"
-     "    int dataMember\;\n"
-     "}\;\n"
-     "\#endif"
-     "\n")
+set (INCLUDE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set (CXX_HEADER_FILE_DIRECTORY_NAME cxx)
+set (TOPLEVEL_HEADER_FILE_NAME ${CXX_HEADER_FILE_DIRECTORY_NAME}/Toplevel.h)
+set (IMMEDIATE_HEADER_FILE_NAME ${CXX_HEADER_FILE_DIRECTORY_NAME}/Immediate.h)
+set (TOPLEVEL_HEADER_FILE_PATH
+     "${CMAKE_CURRENT_SOURCE_DIR}/${TOPLEVEL_HEADER_FILE_NAME}")
+set (IMMEDIATE_HEADER_FILE_PATH
+     "${CMAKE_CURRENT_SOURCE_DIR}/${IMMEDIATE_HEADER_FILE_NAME}")
 
-set (IMMEDIATE_HEADER_FILE
-     ${C_HEADER_FILE_DIRECTORY}/Immediate.h)
-set (IMMEDIATE_HEADER_FILE_CONTENTS
-     "\#include <c/Toplevel.h>\n"
-     "int function ()\;\n"
-     "\n")
+cmake_unit_create_source_file_before_build (NAME ${TOPLEVEL_HEADER_FILE_NAME})
+cmake_unit_create_source_file_before_build (NAME ${IMMEDIATE_HEADER_FILE_NAME}
+                                            INCLUDES
+                                            ${TOPLEVEL_HEADER_FILE_NAME}
+                                            INCLUDE_DIRECTORIES
+                                            ${INCLUDE_DIRECTORY})
 
-set (C_SOURCE_FILE
-     ${CMAKE_CURRENT_BINARY_DIR}/CSource.c)
-set (C_SOURCE_FILE_CONTENTS
-     "\#include <c/Immediate.h>\n"
-     "int function ()\n"
-     "{\n"
-     "    struct MyThing myThing = { 1 }\;\n"
-     "    return myThing.dataMember\;\n"
-     "}\n"
-     "\n")
+set (C_SOURCE_FILE_NAME CSource.c)
+set (C_SOURCE_FILE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${C_SOURCE_FILE_NAME}")
+set (CXX_SOURCE_FILE_NAME CXXSource.cxx)
+set (CXX_SOURCE_FILE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${CXX_SOURCE_FILE_NAME}")
 
-set (CXX_SOURCE_FILE
-     ${CMAKE_CURRENT_BINARY_DIR}/CXXSource.cxx)
-set (CXX_SOURCE_FILE_CONTENTS
-     "extern \"C\" {\n"
-     "\#include <c/Immediate.h>\n"
-     "\#include <c/Toplevel.h>\n"
-     "}\n"
-     "int main (void)\n"
-     "{\n"
-     "    return function ()\;\n"
-     "}\n"
-     "\n")
+cmake_unit_create_source_file_before_build (NAME ${C_SOURCE_FILE_NAME}
+                                            INCLUDES
+                                            ${IMMEDIATE_HEADER_FILE_NAME})
+cmake_unit_create_source_file_before_build (NAME ${CXX_SOURCE_FILE_NAME}
+                                            INCLUDES
+                                            ${IMMEDIATE_HEADER_FILE_NAME})
 
-file (MAKE_DIRECTORY ${INCLUDE_DIRECTORY})
-file (MAKE_DIRECTORY ${C_HEADER_FILE_DIRECTORY})
+polysquare_scan_source_for_headers (SOURCE "${C_SOURCE_FILE_PATH}"
+                                    INCLUDES ${INCLUDE_DIRECTORY})
+polysquare_scan_source_for_headers (SOURCE "${CXX_SOURCE_FILE_PATH}"
+                                    INCLUDES ${INCLUDE_DIRECTORY})
 
-file (WRITE ${C_SOURCE_FILE} ${C_SOURCE_FILE_CONTENTS})
-file (WRITE ${CXX_SOURCE_FILE} ${CXX_SOURCE_FILE_CONTENTS})
-file (WRITE ${TOPLEVEL_HEADER_FILE} ${TOPLEVEL_HEADER_FILE_CONTENTS})
-file (WRITE ${IMMEDIATE_HEADER_FILE} ${IMMEDIATE_HEADER_FILE_CONTENTS})
-
-polysquare_scan_source_for_headers (SOURCE ${C_SOURCE_FILE}
-                             INCLUDES ${INCLUDE_DIRECTORY})
-polysquare_scan_source_for_headers (SOURCE ${CXX_SOURCE_FILE}
-                             INCLUDES ${INCLUDE_DIRECTORY})
-
-polysquare_determine_language_for_source (${TOPLEVEL_HEADER_FILE}
+polysquare_determine_language_for_source ("${TOPLEVEL_HEADER_FILE_PATH}"
                                           LANGUAGE WAS_HEADER)
 
 assert_variable_is (LANGUAGE STRING EQUAL "C")

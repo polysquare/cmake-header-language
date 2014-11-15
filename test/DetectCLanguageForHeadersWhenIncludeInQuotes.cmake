@@ -1,50 +1,29 @@
 # /test/DetectCLanguageForHeadersWhenIncludeInQuotes.cmake
+#
 # Adds some source files which will be detected as C source files
-# and include a header in them, with ${CMAKE_CURRENT_BINARY_DIR}/include
-# to be used as the include-directory. 
+# and include a header in them, with ${CMAKE_CURRENT_SOURCE_DIR} used as
+# the include directory automatically
 #
 # See LICENCE.md for Copyright Information.
 
 include (DetermineHeaderLanguage)
 include (CMakeUnit)
 
-set (INCLUDE_DIRECTORY
-     ${CMAKE_CURRENT_BINARY_DIR}/include)
-set (C_HEADER_FILE_DIRECTORY
-     ${INCLUDE_DIRECTORY}/c)
-set (C_HEADER_FILE
-     ${C_HEADER_FILE_DIRECTORY}/header.h)
-set (C_HEADER_FILE_CONTENTS
-     "struct MyThing\n"
-     "{\n"
-     "    int dataMember\;\n"
-     "}\;\n"
-     "\n")
+set (INCLUDE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set (TOPLEVEL_HEADER_FILE_NAME Toplevel.h)
+set (TOPLEVEL_HEADER_FILE_PATH "${TOPLEVEL_HEADER_FILE_NAME}")
 
-set (C_SOURCE_FILE
-     ${CMAKE_CURRENT_BINARY_DIR}/CSource.c)
-set (C_SOURCE_FILE_CONTENTS
-     "\#include \"c/header.h\"\n"
-     "int main (void)\n"
-     "{\n"
-     "    struct MyThing myThing = { 1 }\;\n"
-     "    return myThing.dataMember\;\n"
-     "}\n"
-     "\n")
+cmake_unit_create_source_file_before_build (NAME ${TOPLEVEL_HEADER_FILE_NAME})
 
-file (MAKE_DIRECTORY ${INCLUDE_DIRECTORY})
-file (MAKE_DIRECTORY ${C_HEADER_FILE_DIRECTORY})
+set (C_SOURCE_FILE_NAME CSource.c)
+set (C_SOURCE_FILE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${C_SOURCE_FILE_NAME}")
 
-file (WRITE ${C_SOURCE_FILE} ${C_SOURCE_FILE_CONTENTS})
-file (WRITE ${C_HEADER_FILE} ${C_HEADER_FILE_CONTENTS})
+cmake_unit_create_source_file_before_build (NAME ${C_SOURCE_FILE_NAME}
+                                            INCLUDES
+                                            "${TOPLEVEL_HEADER_FILE_PATH}")
 
-polysquare_scan_source_for_headers (SOURCE ${C_SOURCE_FILE}
-                             INCLUDES ${INCLUDE_DIRECTORY}
-                             CPP_IDENTIFIERS
-                             POLYSQUARE_BEGIN_DECLS
-                             POLYSQUARE_IS_CPP)
-
-polysquare_determine_language_for_source (${C_HEADER_FILE}
+polysquare_scan_source_for_headers (SOURCE "${C_SOURCE_FILE_PATH}")
+polysquare_determine_language_for_source ("${TOPLEVEL_HEADER_FILE_PATH}"
                                           LANGUAGE WAS_HEADER)
 
 assert_variable_is (LANGUAGE STRING EQUAL "C")
