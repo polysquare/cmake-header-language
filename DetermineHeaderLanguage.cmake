@@ -12,7 +12,7 @@ if (POLICY CMP0054)
 
     cmake_policy (SET CMP0054 NEW)
 
-endif (POLICY CMP0054)
+endif ()
 
 function (_psq_get_absolute_path_to_header_file_language ABSOLUTE_PATH_TO_HEADER
                                                          LANGUAGE)
@@ -46,9 +46,9 @@ function (_psq_get_absolute_path_to_header_file_language ABSOLUTE_PATH_TO_HEADER
 
             list (APPEND HEADER_FILE_LANGUAGE "CXX")
 
-        endif (IS_MIXED_MODE)
+        endif ()
 
-    endif ("${HEADER_FILE_LANGUAGE}" STREQUAL "C")
+    endif ()
 
     set (${LANGUAGE} ${HEADER_FILE_LANGUAGE} PARENT_SCOPE)
 
@@ -77,7 +77,7 @@ function (polysquare_source_type_from_source_file_extension SOURCE RETURN_TYPE)
         set (${RETURN_TYPE} "HEADER" PARENT_SCOPE)
         return ()
 
-    endif (HEADER_FILE_ONLY)
+    endif ()
 
     # Try and detect the language based on the file's extension
     get_filename_component (EXTENSION ${SOURCE} EXT)
@@ -92,7 +92,7 @@ function (polysquare_source_type_from_source_file_extension SOURCE RETURN_TYPE)
             set (${RETURN_TYPE} "C_SOURCE" PARENT_SCOPE)
             return ()
 
-        endif (NOT C_INDEX EQUAL -1)
+        endif ()
 
         list (FIND CMAKE_CXX_SOURCE_FILE_EXTENSIONS ${EXTENSION} CXX_INDEX)
 
@@ -101,7 +101,7 @@ function (polysquare_source_type_from_source_file_extension SOURCE RETURN_TYPE)
             set (${RETURN_TYPE} "CXX_SOURCE" PARENT_SCOPE)
             return ()
 
-        endif (NOT CXX_INDEX EQUAL -1)
+        endif ()
 
         # CMake doesn't provide a list of header file extensions. Here are
         # some common ones.
@@ -121,14 +121,14 @@ function (polysquare_source_type_from_source_file_extension SOURCE RETURN_TYPE)
             set (${RETURN_TYPE} "HEADER" PARENT_SCOPE)
             return ()
 
-        endif (NOT HEADER_INDEX EQUAL -1)
+        endif ()
 
-    endif (EXTENSION)
+    endif ()
 
     # If we got to this point, then we don't know, set UNKNOWN
     set (${RETURN_TYPE} "UNKNOWN" PARENT_SCOPE)
 
-endfunction (polysquare_source_type_from_source_file_extension)
+endfunction ()
 
 function (_psq_language_from_source SOURCE
                                     RETURN_LANGUAGE
@@ -169,7 +169,7 @@ function (_psq_language_from_source SOURCE
                  "header. It should not be passed to "
                  "polysquare_scan_source_for_headers")
 
-    endif ("${SOURCE_TYPE}" STREQUAL "C_SOURCE")
+    endif ()
 
     # Override language based on option here after we've scanned everything
     # and worked out if this was a header or not
@@ -177,7 +177,7 @@ function (_psq_language_from_source SOURCE
 
         set (_RETURN_LANGUAGE ${LANG_FROM_SOURCE_FORCE_LANGUAGE})
 
-    else (LANG_FROM_SOURCE_FORCE_LANGUAGE)
+    else ()
 
         get_property (LANGUAGE SOURCE ${SOURCE} PROPERTY SET_LANGUAGE)
 
@@ -186,13 +186,13 @@ function (_psq_language_from_source SOURCE
 
            set (_RETURN_LANGUAGE ${SET_LANGUAGE})
 
-        endif (DEFINED SET_LANGUAGE)
+        endif ()
 
-    endif (LANG_FROM_SOURCE_FORCE_LANGUAGE)
+    endif ()
 
     set (${RETURN_LANGUAGE} ${_RETURN_LANGUAGE} PARENT_SCOPE)
 
-endfunction () 
+endfunction ()
 
 function (_psq_process_include_statement_path INCLUDE_PATH
                                               UPDATE_HEADERS_RETURN)
@@ -234,9 +234,9 @@ function (_psq_process_include_statement_path INCLUDE_PATH
 
                 list (APPEND HEADERS_TO_UPDATE_LIST "${ABSOLUTE_PATH}")
 
-            endif (DEFINED HEADER_LANGUAGE AND C_INDEX EQUAL -1)
+            endif ()
 
-        endif (EXISTS ${ABSOLUTE_PATH} OR HEADER_IS_GENERATED)
+        endif ()
 
     endforeach ()
 
@@ -282,7 +282,7 @@ function (polysquare_scan_source_for_headers)
         message (FATAL_ERROR "SOURCE ${SCAN_SOURCE} must be "
                              "set to use this function")
 
-    endif (NOT DEFINED SCAN_SOURCE)
+    endif ()
 
     # Source doesn't exist. This is fine, we might be recursively scanning
     # a header path which is generated. If it is generated, gracefully bail
@@ -296,15 +296,15 @@ function (polysquare_scan_source_for_headers)
 
             return ()
 
-        else (SOURCE_IS_GENERATED)
+        else ()
 
             message (FATAL_ERROR "_scan_source_file_for_headers called with "
                                  "a source file that does not exist or was "
                                  "not generated as part of a build rule")
 
-        endif (SOURCE_IS_GENERATED)
+        endif ()
 
-    endif (NOT EXISTS ${SCAN_SOURCE})
+    endif ()
 
     # We've already scanned this source file in this pass, bail out
     get_property (ALREADY_SCANNED GLOBAL
@@ -315,7 +315,7 @@ function (polysquare_scan_source_for_headers)
 
         return ()
 
-    endif (NOT SOURCE_INDEX EQUAL -1)
+    endif ()
 
     set_property (GLOBAL APPEND PROPERTY _POLYSQUARE_ALREADY_SCANNED_SOURCES
                   ${SCAN_SOURCE})
@@ -387,7 +387,7 @@ function (polysquare_scan_source_for_headers)
 
                     list (APPEND SCAN_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR})
 
-                endif (NOT QUOTE_INDEX EQUAL -1)
+                endif ()
 
                 _psq_process_include_statement_path (${HEADER} UPDATE_HEADERS
                                                      INCLUDES ${SCAN_INCLUDES})
@@ -412,7 +412,7 @@ function (polysquare_scan_source_for_headers)
                              "${${HEADER_PATHS_MAP_KEY}}"
                              CACHE INTERNAL "" FORCE)
 
-                    endif (PATH_TO_SCAN_INDEX EQUAL -1)
+                    endif ()
 
                     # Append the header to the list of candidate headers
                     # globally
@@ -427,11 +427,11 @@ function (polysquare_scan_source_for_headers)
                                       _POLYSQUARE_CANDIDATE_HEADERS
                                       "${HEADER}")
 
-                    endif (CANDIDATE_HEADER_INDEX EQUAL -1)
+                    endif ()
 
                 endforeach ()
 
-           endif (LINE MATCHES "^.*\#include.*[<\"].*[>\"]")
+           endif ()
 
            if (SCAN_FOR_CXX_IDENTIFIERS)
 
@@ -450,11 +450,11 @@ function (polysquare_scan_source_for_headers)
                              CACHE INTERNAL "" FORCE)
                         set (SCAN_FOR_CXX_IDENTIFIERS FALSE)
 
-                    endif (LINE MATCHES "^.*${IDENTIFIER}")
+                    endif ()
 
                 endforeach ()
 
-            endif (SCAN_FOR_CXX_IDENTIFIERS)
+            endif ()
 
         endforeach ()
 
@@ -497,7 +497,7 @@ endfunction ()
 function (polysquare_determine_language_for_source SOURCE
                                                    LANGUAGE_RETURN
                                                    SOURCE_WAS_HEADER_RETURN)
- 
+
     set (DETERMINE_LANG_MULTIVAR_ARGS INCLUDES)
     cmake_parse_arguments (DETERMINE_LANG
                            ""
@@ -510,7 +510,7 @@ function (polysquare_determine_language_for_source SOURCE
         set (LANG_FROM_SOURCE_FORCE_LANGUAGE_OPT
              FORCE_LANGUAGE ${DETERMINE_LANG_FORCE_LANGUAGE})
 
-    endif (DETERMINE_LANG_FORCE_LANGUAGE)
+    endif ()
 
     _psq_language_from_source (${SOURCE} LANGUAGE WAS_HEADER
                                ${LANG_FROM_SOURCE_FORCE_LANGUAGE_OPT})
@@ -524,7 +524,7 @@ function (polysquare_determine_language_for_source SOURCE
         set (${LANGUAGE_RETURN} ${LANGUAGE} PARENT_SCOPE)
         return ()
 
-    else (NOT WAS_HEADER OR DETERMINE_LANG_FORCE_LANGUAGE)
+    else ()
 
         set (${SOURCE_WAS_HEADER_RETURN} TRUE PARENT_SCOPE)
 
@@ -545,7 +545,7 @@ function (polysquare_determine_language_for_source SOURCE
 
         # Error case
         if (NOT DEFINED HEADER_LANGUAGE)
-        
+
             set (ERROR_MESSAGE "Couldn't find language for the header file"
                                " ${ABSOLUTE_PATH}. Make sure to include "
                                " this header file in at least one source "
@@ -575,12 +575,12 @@ function (polysquare_determine_language_for_source SOURCE
 
             return ()
 
-        endif (NOT DEFINED HEADER_LANGUAGE)
+        endif ()
 
         set (${LANGUAGE_RETURN} ${HEADER_LANGUAGE} PARENT_SCOPE)
         return ()
 
-    endif (NOT WAS_HEADER OR DETERMINE_LANG_FORCE_LANGUAGE)
+    endif ()
 
     message (FATAL_ERROR "This section should not be reached")
 

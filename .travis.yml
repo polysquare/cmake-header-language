@@ -8,6 +8,7 @@ before_install:
   - sudo add-apt-repository -y ppa:kubuntu-ppa/beta
   - sudo apt-add-repository -y ppa:saiarcot895/chromium-dev
   - gem install coveralls-lcov;
+  - sudo pip install cmakelint
   - sudo apt-get update -qq
   - sudo apt-get install -qq `cat DEPENDENCIES`
   - cmake --version
@@ -23,6 +24,14 @@ script:
   - cmake .. -G "${CMAKE_GENERATOR}" -DCMAKE_UNIT_LOG_COVERAGE=1
   - ctest --output-on-failure
   - popd
+  # Find all errors except:
+  # 1. Spaces between control and condition (preferred style)
+  # 2. Indentation errors
+  - find . -type f -name "*.cmake" -not -path "./test/build/*"| xargs cmakelint --spaces=4 --filter=-whitespace/extra,-whitespace/indent > .cmake-lint-log
+  - cat .cmake-lint-log
+  # Fails if file has length
+  - echo "! [ -s .cmake-lint-log ]" > .check-link-script.bash
+  - bash .check-link-script.bash
 after_success:
   - cmake -DTRACEFILE=test/build/PolysquareCMakeHeaderLanguageTests.trace -DLCOV_OUTPUT=test/build/coverage.info -P cmake-unit/CMakeTraceToLCov.cmake
   - coveralls-lcov test/build/coverage.info
