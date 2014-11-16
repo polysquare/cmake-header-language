@@ -1,5 +1,4 @@
-#
-# DetermineHeaderLanguage.cmake
+# /DetermineHeaderLanguage.cmake
 #
 # CMake utility to determine the languages of a header file. This information
 # can be used to determine which language mode certain tools should run in.
@@ -263,8 +262,8 @@ endfunction ()
 #     the header language will be set to C;CXX
 #
 # SOURCE: The source file to be scanned
-# [Optional INCLUDES]: Any include directories to search for header files
-# [Optional CPP_IDENTIFIERS]: Any identifiers which might indicate that this
+# [Optional] INCLUDES: Any include directories to search for header files
+# [Optional] CPP_IDENTIFIERS: Any identifiers which might indicate that this
 #                             source can be compiled with both C and CXX.
 function (polysquare_scan_source_for_headers)
 
