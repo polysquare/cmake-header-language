@@ -4,7 +4,7 @@
 # and include a header in them, with ${CMAKE_CURRENT_BINARY_DIR}/include
 # to be used as the include-directory.
 #
-# See LICENCE.md for Copyright Information.
+# See LICENCE.md for Copyright information
 
 include (DetermineHeaderLanguage)
 include (CMakeUnit)

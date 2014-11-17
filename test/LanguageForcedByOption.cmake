@@ -7,7 +7,7 @@
 # Force the language to CXX. The header should still be marked as a
 # header, but the langauge will be CXX.
 #
-# See LICENCE.md for Copyright Information.
+# See LICENCE.md for Copyright information
 
 include (DetermineHeaderLanguage)
 include (CMakeUnit)

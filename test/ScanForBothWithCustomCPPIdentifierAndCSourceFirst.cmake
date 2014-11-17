@@ -12,7 +12,7 @@
 # cppcheck_target_sources know about that identifier. This shall make it scanned
 # in both modes
 #
-# See LICENCE.md for Copyright Information.
+# See LICENCE.md for Copyright information
 
 include (DetermineHeaderLanguage)
 include (CMakeUnit)

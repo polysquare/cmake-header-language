@@ -3,7 +3,7 @@
 # CMake utility to determine the languages of a header file. This information
 # can be used to determine which language mode certain tools should run in.
 #
-# See LICENCE.md for Copyright information.
+# See LICENCE.md for Copyright information
 
 include (CMakeParseArguments)
 

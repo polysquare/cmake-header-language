@@ -7,7 +7,7 @@
 # Add #ifdef __cplusplus to the header file. This shall make it scanned
 # in both modes
 #
-# See LICENCE.md for Copyright Information.
+# See LICENCE.md for Copyright information
 
 include (DetermineHeaderLanguage)
 include (CMakeUnit)

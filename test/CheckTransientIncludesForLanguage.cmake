@@ -13,7 +13,7 @@
 # header. Because Immediate.h includes Toplevel.h, it also becomes a "C"
 # header too, even though CXXSource.cxx includes it.
 #
-# See LICENCE.md for Copyright Information.
+# See LICENCE.md for Copyright information
 
 include (DetermineHeaderLanguage)
 include (CMakeUnit)
