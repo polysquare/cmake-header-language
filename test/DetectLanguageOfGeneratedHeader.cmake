@@ -3,7 +3,7 @@
 # Adds some source files which will be detected as C source files
 # and include a header in them, although that header will be a generated file.
 #
-# See LICENCE.md for Copyright Information.
+# See LICENCE.md for Copyright information
 
 include (DetermineHeaderLanguage)
 include (CMakeUnit)

@@ -1,9 +1,9 @@
-# /test/SourceWasHeaderTrueForSource.cmake
+# /test/SourceWasHeaderFalseForSource.cmake
 #
 # Adds some source files with a header file. WAS_HEADER
 # should be false for the source file.
 #
-# See LICENCE.md for Copyright Information.
+# See LICENCE.md for Copyright information
 
 include (DetermineHeaderLanguage)
 include (CMakeUnit)

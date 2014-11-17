@@ -1,4 +1,5 @@
-# /tests/CMakeLists.txt
+# /test/CMakeLists.txt
+#
 # Main entry point for the common-universal-cmake tests.
 #
 # See LICENCE.md for Copyright information

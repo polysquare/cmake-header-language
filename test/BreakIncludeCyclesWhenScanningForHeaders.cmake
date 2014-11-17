@@ -11,7 +11,7 @@
 # Immediate.h shall also include Toplevel.h. This would technically
 # create a cycle.
 #
-# See LICENCE.md for Copyright Information.
+# See LICENCE.md for Copyright information
 
 include (DetermineHeaderLanguage)
 include (CMakeUnit)
