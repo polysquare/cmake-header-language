@@ -4,9 +4,9 @@ CMake macro to determine the language of a header file.
 
 ## Status ##
 
-| Travis-CI (Ubuntu) | AppVeyor (Windows) | Coveralls |
-|--------------------|--------------------|-----------|
-|[![Travis](https://travis-ci.org/polysquare/cmake-determine-header-language.svg?branch=master)](https://travis-ci.org/polysquare/cmake-determine-header-language)|[![AppVeyor](https://ci.appveyor.com/api/projects/status/3q97d9iw7dset8ty/branch/master?svg=true)](https://ci.appveyor.com/project/smspillaz/cmake-determine-header-language/branch/master)|[![Coveralls](https://coveralls.io/repos/polysquare/cmake-determine-header-language/badge.png)](https://coveralls.io/r/polysquare/cmake-determine-header-language)|
+| Travis CI (Ubuntu) | AppVeyor (Windows) | Coverage | Biicode | Licence |
+|--------------------|--------------------|----------|---------|---------|
+|[![Travis](https://img.shields.io/travis/polysquare/cmake-header-language.svg)](http://travis-ci.org/polysquare/cmake-header-language)|[![AppVeyor](https://img.shields.io/appveyor/ci/smspillaz/cmake-header-language.svg)](https://ci.appveyor.com/project/smspillaz/cmake-header-language)|[![Coveralls](https://img.shields.io/coveralls/polysquare/cmake-header-language.svg)](http://coveralls.io/polysquare/cmake-header-language)|[![Biicode](https://webapi.biicode.com/v1/badges/smspillaz/smspillaz/cmake-header-language/master)](https://www.biicode.com/smspillaz/cmake-header-language)|[![License](https://img.shields.io/github/license/polysquare/cmake-header-language.svg)](http://github.com/polysquare/cmake-header-language)|
 
 ## Description ##
 
@@ -24,7 +24,7 @@ name of files specified in the `#include` statements.
 ### Scanning for header files ###
 
 You can scan a source file for headers recursively using
-`polysquare_scan_source_for_headers`.  The macro will apply the following rules
+`psq_scan_source_for_headers`.  The macro will apply the following rules
 to any detected header file.
 
 * If source file including the header is a C++ source and the header file was
@@ -38,25 +38,25 @@ to any detected header file.
 
 See, for example:
 
-    polysquare_scan_source_for_headers (SOURCE my_source.c
-                                        INCLUDES /path/to/include/dir
-                                        CPP_IDENTIFIERS
-                                        MY_SOURCE_IS_COMPILING_CXX)
+    psq_scan_source_for_headers (SOURCE /my_source.c
+                                 INCLUDES /path/to/include/dir
+                                 CPP_IDENTIFIERS
+                                 MY_SOURCE_IS_COMPILING_CXX)
 
 ### Getting the language of any source ###
 
 Once sources have been scanned for header files, their language can be obtained
-with `polysquare_determine_language_from_source`.  If this function is used on a
+with `psq_determine_language_for_source`.  If this function is used on a
 header which was not part of an already scanned source, then a fatal error will
 result.
 
 See, for example:
 
-    polysquare_determine_language_from_source (my_header.h LANGUAGE WAS_HEADER)
+    psq_determine_language_for_source (/my_header.h LANGUAGE WAS_HEADER)
 
-`LANGUAGE` will be set to C, CXX or both should the header be compilable in both
-modes.  `WAS_HEADER` will be set to TRUE if the scanned source was a header,
-FALSE otherwise.
+`LANGUAGE` will be set to C, CXX or both should the header be able to be
+compiled in both modes.  `WAS_HEADER` will be set to TRUE if the scanned source
+was a header, FALSE otherwise.
 
 ## Reference ##
 
@@ -72,7 +72,7 @@ RETURN_TYPE. Valid values are C_SOURCE, CXX_SOURCE, HEADER and UNKNOWN
 * `SOURCE`: Source file to scan
 * `RETURN_TYPE`: Variable to set the source type in
 
-### `polysquare_scan_source_for_headers` ###
+### `psq_scan_source_for_headers` ###
 
 Opens the source file `SOURCE` at its absolute path and scans it
 for `#include` statements if we have not done so already. The content of the
@@ -97,7 +97,7 @@ the header language will be set to `C;CXX`
 * [Optional] `CPP_IDENTIFIERS`: Any identifiers which might indicate that this
                                 source can be compiled with both C and CXX.
 
-### `polysquare_determine_language_for_source` ###
+### `psq_determine_language_for_source` ###
 
 Takes any source, including a header file and writes the determined
 language into `LANGUAGE_RETURN`. If the source is a header file
@@ -105,7 +105,7 @@ language into `LANGUAGE_RETURN`. If the source is a header file
 
 This function only works for header files if those header files
 were included by sources previously scanned by
-`polysquare_scan_source_for_headers`. They must be scanned before
+`psq_scan_source_for_headers`. They must be scanned before
 this function is called, otherwise this function will be unable
 to determine the language of the source file and report an error.
 
