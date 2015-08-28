@@ -3,7 +3,17 @@
 # CMake utility to determine the languages of a header file. This information
 # can be used to determine which language mode certain tools should run in.
 #
-# See LICENCE.md for Copyright information
+# See /LICENCE.md for Copyright information
+if (NOT BIICODE)
+
+    set (CMAKE_MODULE_PATH
+         "${CMAKE_CURRENT_LIST_DIR}/bii/deps"
+         "${CMAKE_MODULE_PATH}")
+
+endif (NOT BIICODE)
+
+include ("smspillaz/cmake-include-guard/IncludeGuard")
+cmake_include_guard (SET_MODULE_PATH)
 
 include (CMakeParseArguments)
 
@@ -64,11 +74,11 @@ endfunction ()
 #
 # SOURCE: Source file to scan
 # RETURN_TYPE: Variable to set the source type in
-function (polysquare_source_type_from_source_file_extension SOURCE RETURN_TYPE)
+function (psq_source_type_from_source_file_extension SOURCE RETURN_TYPE)
 
     # HEADER_FILE_ONLY overrides everything else
     get_property (HEADER_FILE_ONLY
-                  SOURCE ${SOURCE}
+                  SOURCE "${SOURCE}"
                   PROPERTY HEADER_FILE_ONLY)
 
     if (HEADER_FILE_ONLY)
@@ -79,7 +89,7 @@ function (polysquare_source_type_from_source_file_extension SOURCE RETURN_TYPE)
     endif ()
 
     # Try and detect the language based on the file's extension
-    get_filename_component (EXTENSION ${SOURCE} EXT)
+    get_filename_component (EXTENSION "${SOURCE}" EXT)
     if (EXTENSION)
 
         string (SUBSTRING ${EXTENSION} 1 -1 EXTENSION)
@@ -142,7 +152,7 @@ function (_psq_language_from_source SOURCE
     set (${SOURCE_WAS_HEADER_RETURN} FALSE PARENT_SCOPE)
     set (_RETURN_LANGUAGE "")
 
-    polysquare_source_type_from_source_file_extension (${SOURCE} SOURCE_TYPE)
+    psq_source_type_from_source_file_extension ("${SOURCE}" SOURCE_TYPE)
 
     if ("${SOURCE_TYPE}" STREQUAL "C_SOURCE")
 
@@ -155,10 +165,10 @@ function (_psq_language_from_source SOURCE
     elseif ("${SOURCE_TYPE}" STREQUAL "HEADER")
 
         set (${SOURCE_WAS_HEADER_RETURN} TRUE PARENT_SCOPE)
-        # Couldn't find source langauge from either extension or property.
+        # Couldn't find source language from either extension or property.
         # We might be scanning a header so check the header maps for a language
         set (LANGUAGE "")
-        _psq_get_absolute_path_to_header_file_language (${SOURCE} LANGUAGE)
+        _psq_get_absolute_path_to_header_file_language ("${SOURCE}" LANGUAGE)
         set (_RETURN_LANGUAGE ${LANGUAGE})
 
     elseif ("${SOURCE_TYPE}" STREQUAL "UNKNOWN")
@@ -166,7 +176,7 @@ function (_psq_language_from_source SOURCE
         message (FATAL_ERROR
                  "The file ${SOURCE} is not a C or C++ source, and is not a "
                  "header. It should not be passed to "
-                 "polysquare_scan_source_for_headers")
+                 "psq_scan_source_for_headers")
 
     endif ()
 
@@ -178,12 +188,12 @@ function (_psq_language_from_source SOURCE
 
     else ()
 
-        get_property (LANGUAGE SOURCE ${SOURCE} PROPERTY SET_LANGUAGE)
+        get_property (LANGUAGE SOURCE "${SOURCE}" PROPERTY SET_LANGUAGE)
 
         # User overrode the LANGUAGE property, use that.
         if (DEFINED SET_LANGUAGE)
 
-           set (_RETURN_LANGUAGE ${SET_LANGUAGE})
+            set (_RETURN_LANGUAGE ${SET_LANGUAGE})
 
         endif ()
 
@@ -195,7 +205,6 @@ endfunction ()
 
 function (_psq_process_include_statement_path INCLUDE_PATH
                                               UPDATE_HEADERS_RETURN)
-
     set (HEADERS_TO_UPDATE_LIST)
     set (PROCESS_MULTIVAR_ARGS INCLUDES)
 
@@ -213,13 +222,13 @@ function (_psq_process_include_statement_path INCLUDE_PATH
         get_property (HEADER_IS_GENERATED SOURCE "${ABSOLUTE_PATH}"
                       PROPERTY GENERATED)
 
-        if (EXISTS ${ABSOLUTE_PATH} OR HEADER_IS_GENERATED)
+        if (EXISTS "${ABSOLUTE_PATH}" OR HEADER_IS_GENERATED)
 
             # First see if a language has already been set for this header
             # file. If so, and it is "C", then we can't change it any
             # further at this point.
             set (HEADER_LANGUAGE "")
-            _psq_get_absolute_path_to_header_file_language (${ABSOLUTE_PATH}
+            _psq_get_absolute_path_to_header_file_language ("${ABSOLUTE_PATH}"
                                                             HEADER_LANGUAGE)
 
             list (FIND HEADER_LANGUAGE "C" C_INDEX)
@@ -243,7 +252,7 @@ function (_psq_process_include_statement_path INCLUDE_PATH
 
 endfunction ()
 
-# polysquare_scan_source_for_headers
+# psq_scan_source_for_headers
 #
 # Opens the source file SOURCE at its absolute path and scans it for
 # #include statements if we have not done so already. The content of the
@@ -265,7 +274,7 @@ endfunction ()
 # [Optional] INCLUDES: Any include directories to search for header files
 # [Optional] CPP_IDENTIFIERS: Any identifiers which might indicate that this
 #                             source can be compiled with both C and CXX.
-function (polysquare_scan_source_for_headers)
+function (psq_scan_source_for_headers)
 
     set (SCAN_SINGLEVAR_ARGUMENTS SOURCE)
     set (SCAN_MULTIVAR_ARGUMENTS INCLUDES CPP_IDENTIFIERS)
@@ -286,9 +295,9 @@ function (polysquare_scan_source_for_headers)
     # Source doesn't exist. This is fine, we might be recursively scanning
     # a header path which is generated. If it is generated, gracefully bail
     # out, otherwise exit with a FATAL_ERROR as this is really an assertion
-    if (NOT EXISTS ${SCAN_SOURCE})
+    if (NOT EXISTS "${SCAN_SOURCE}")
 
-        get_property (SOURCE_IS_GENERATED SOURCE ${SCAN_SOURCE}
+        get_property (SOURCE_IS_GENERATED SOURCE "${SCAN_SOURCE}"
                       PROPERTY GENERATED)
 
         if (SOURCE_IS_GENERATED)
@@ -307,8 +316,8 @@ function (polysquare_scan_source_for_headers)
 
     # We've already scanned this source file in this pass, bail out
     get_property (ALREADY_SCANNED GLOBAL
-                  PROPERTY _POLYSQUARE_ALREADY_SCANNED_SOURCES)
-    list (FIND ALREADY_SCANNED ${SCAN_SOURCE} SOURCE_INDEX)
+                  PROPERTY _PSQ_ALREADY_SCANNED_SOURCES)
+    list (FIND ALREADY_SCANNED "${SCAN_SOURCE}" SOURCE_INDEX)
 
     if (NOT SOURCE_INDEX EQUAL -1)
 
@@ -316,8 +325,8 @@ function (polysquare_scan_source_for_headers)
 
     endif ()
 
-    set_property (GLOBAL APPEND PROPERTY _POLYSQUARE_ALREADY_SCANNED_SOURCES
-                  ${SCAN_SOURCE})
+    set_property (GLOBAL APPEND PROPERTY _PSQ_ALREADY_SCANNED_SOURCES
+                  "${SCAN_SOURCE}")
 
     set (HEADER_PATHS_MAP_KEY "_PSQ_DETERMINE_LANG_HEADERS_${SCAN_SOURCE}")
     set (HAS_CXX_TOKENS_MAP_KEY
@@ -330,28 +339,28 @@ function (polysquare_scan_source_for_headers)
     # Check the source file's timestamp and then check it against what we have
     # in the cache. If it is different, or CPP_IDENTIFIERS are different, then
     # we need to re-scan this file
-    file (TIMESTAMP ${SCAN_SOURCE} FILE_TIMESTAMP)
+    file (TIMESTAMP "${SCAN_SOURCE}" FILE_TIMESTAMP)
 
     if (NOT "${FILE_TIMESTAMP}" STREQUAL "${${FILE_TIMESTAMP_MAP_KEY}}" OR
         NOT "${CPP_IDENTIFIERS}" STREQUAL "${${SCANNED_CXX_TOKENS_MAP_KEY}}")
 
         set ("${FILE_TIMESTAMP_MAP_KEY}"
-             "${FILE_TIMESTAMP}" CACHE INTERNAL "" FORCE)
+             CACHE INTERNAL "" FORCE)
 
         # Open the source file and read its contents
-        file (READ ${SCAN_SOURCE} SOURCE_CONTENTS)
+        file (READ "${SCAN_SOURCE}" SOURCE_CONTENTS)
 
         # Split the read contents into lines, using ; as the delimiter
         string (REGEX REPLACE ";" "\\\\;" SOURCE_CONTENTS "${SOURCE_CONTENTS}")
         string (REGEX REPLACE "\n" ";" SOURCE_CONTENTS "${SOURCE_CONTENTS}")
 
-        _psq_language_from_source (${SCAN_SOURCE} LANGUAGE WAS_HEADER)
+        _psq_language_from_source ("${SCAN_SOURCE}" LANGUAGE WAS_HEADER)
 
         # If we are scanning a header file right now, the we need to check now
         # while reading it for other headers for CXX tokens too. If there are
         # CXX tokens, we'll keep it in our special
         # _PSQ_DETERMINE_LANG_HAS_CXX_TOKENS_
-        set (SCAN_FOR_CXX_IDENTIFIERS ${WAS_HEADER})
+        set (SCAN_FOR_CXX_IDENTIFIERS "${WAS_HEADER}")
 
         foreach (LINE ${SOURCE_CONTENTS})
 
@@ -375,7 +384,7 @@ function (polysquare_scan_source_for_headers)
                 string (FIND "${HEADER}" "${PATH_END}" PATH_END_INDEX)
                 string (SUBSTRING "${HEADER}" 0 ${PATH_END_INDEX} HEADER)
 
-                string (STRIP ${HEADER} HEADER)
+                string (STRIP "${HEADER}" HEADER)
 
                 # Check if this include statement has quotes. If it does, then
                 # we should include the current source directory in the include
@@ -384,11 +393,11 @@ function (polysquare_scan_source_for_headers)
 
                 if (NOT QUOTE_INDEX EQUAL -1)
 
-                    list (APPEND SCAN_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR})
+                    list (APPEND SCAN_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}")
 
                 endif ()
 
-                _psq_process_include_statement_path (${HEADER} UPDATE_HEADERS
+                _psq_process_include_statement_path ("${HEADER}" UPDATE_HEADERS
                                                      INCLUDES ${SCAN_INCLUDES})
 
                 # Every correct combination of include-directory to header
@@ -399,14 +408,14 @@ function (polysquare_scan_source_for_headers)
                     set ("${LANGUAGE_MAP_KEY}" "${LANGUAGE}"
                          CACHE INTERNAL "" FORCE)
 
-                    list (FIND "${HEADER_PATHS_MAP_KEY}"
-                          ${HEADER} PATH_TO_SCAN_INDEX)
+                    list (FIND "${HEADER_PATHS_MAP_KEY}" "${HEADER}"
+                          PATH_TO_SCAN_INDEX)
 
                     # Append the header to the list of headers for this
                     # source file.
                     if (PATH_TO_SCAN_INDEX EQUAL -1)
 
-                        list (APPEND "${HEADER_PATHS_MAP_KEY}" ${HEADER})
+                        list (APPEND "${HEADER_PATHS_MAP_KEY}" "${HEADER}")
                         set ("${HEADER_PATHS_MAP_KEY}"
                              "${${HEADER_PATHS_MAP_KEY}}"
                              CACHE INTERNAL "" FORCE)
@@ -416,26 +425,26 @@ function (polysquare_scan_source_for_headers)
                     # Append the header to the list of candidate headers
                     # globally
                     get_property (CANDIDATE_HEADERS GLOBAL
-                                  PROPERTY _POLYSQUARE_CANDIDATE_HEADERS)
+                                  PROPERTY _PSQ_CANDIDATE_HEADERS)
                     list (FIND CANDIDATE_HEADERS "${HEADER}"
                           CANDIDATE_HEADER_INDEX)
 
                     if (CANDIDATE_HEADER_INDEX EQUAL -1)
 
                         set_property (GLOBAL APPEND PROPERTY
-                                      _POLYSQUARE_CANDIDATE_HEADERS
+                                      _PSQ_CANDIDATE_HEADERS
                                       "${HEADER}")
 
                     endif ()
 
                 endforeach ()
 
-           endif ()
+            endif ()
 
-           if (SCAN_FOR_CXX_IDENTIFIERS)
+            if (SCAN_FOR_CXX_IDENTIFIERS)
 
                 list (APPEND SCAN_CPP_IDENTIFIERS
-                      __cplusplus)
+                      "__cplusplus")
                 list (REMOVE_DUPLICATES SCAN_CPP_IDENTIFIERS)
 
                 foreach (IDENTIFIER ${SCAN_CPP_IDENTIFIERS})
@@ -464,7 +473,7 @@ function (polysquare_scan_source_for_headers)
 
         # Recursively scan for header more header files
         # in this one
-        polysquare_scan_source_for_headers (SOURCE ${HEADER}
+        psq_scan_source_for_headers (SOURCE "${HEADER}"
                                             INCLUDES
                                             ${SCAN_INCLUDES}
                                             CPP_IDENTIFIERS
@@ -474,7 +483,7 @@ function (polysquare_scan_source_for_headers)
 
 endfunction ()
 
-# polysquare_determine_language_for_source
+# psq_determine_language_for_source
 #
 # Takes any source, including a header file and writes the determined
 # language into LANGUAGE_RETURN. If the source is a header file
@@ -482,7 +491,7 @@ endfunction ()
 #
 # This function only works for header files if those header files
 # were included by sources previously scanned by
-# polysquare_scan_source_for_headers. They must be scanned before
+# psq_scan_source_for_headers. They must be scanned before
 # this function is called, otherwise this function will be unable
 # to determine the language of the source file and report an error.
 #
@@ -493,9 +502,9 @@ endfunction ()
 #                           checked.
 # [Optional] FORCE_LANGUAGE: Performs scanning, but forces language to be one
 #                            of C or CXX.
-function (polysquare_determine_language_for_source SOURCE
-                                                   LANGUAGE_RETURN
-                                                   SOURCE_WAS_HEADER_RETURN)
+function (psq_determine_language_for_source SOURCE
+                                            LANGUAGE_RETURN
+                                            SOURCE_WAS_HEADER_RETURN)
 
     set (DETERMINE_LANG_MULTIVAR_ARGS INCLUDES)
     cmake_parse_arguments (DETERMINE_LANG
@@ -511,9 +520,9 @@ function (polysquare_determine_language_for_source SOURCE
 
     endif ()
 
-    _psq_language_from_source (${SOURCE} LANGUAGE WAS_HEADER
+    _psq_language_from_source ("${SOURCE}" LANGUAGE WAS_HEADER
                                ${LANG_FROM_SOURCE_FORCE_LANGUAGE_OPT})
-    set (${SOURCE_WAS_HEADER_RETURN} ${WAS_HEADER} PARENT_SCOPE)
+    set (${SOURCE_WAS_HEADER_RETURN} "${WAS_HEADER}" PARENT_SCOPE)
 
     # If it wasn't a header or language was forced, then the answer
     # we got back was the authority. There's no need to check for
@@ -538,8 +547,8 @@ function (polysquare_determine_language_for_source SOURCE
         # added to the list of known headers. We'll error out with a message
         # suggesting that it must be included at least once somewhere, or
         # a FORCE_LANGUAGE option should be passed
-        get_filename_component (ABSOLUTE_PATH ${SOURCE} ABSOLUTE)
-        _psq_get_absolute_path_to_header_file_language (${ABSOLUTE_PATH}
+        get_filename_component (ABSOLUTE_PATH "${SOURCE}" ABSOLUTE)
+        _psq_get_absolute_path_to_header_file_language ("${ABSOLUTE_PATH}"
                                                         HEADER_LANGUAGE)
 
         # Error case
@@ -550,16 +559,16 @@ function (polysquare_determine_language_for_source SOURCE
                                " this header file in at least one source "
                                " file and add that source file to a "
                                " target and scan it using "
-                               " polysquare_scan_source_for_headers or specify"
+                               " psq_scan_source_for_headers or specify"
                                " the FORCE_LANGUAGE option to the call to"
-                               " polysquare_determine_language_for_source where"
+                               " psq_determine_language_for_source where"
                                " the header will be included in the arguments.")
 
             set (ERROR_MESSAGE "${ERROR_MESSAGE}\n The following sources have "
                                "been scanned for includes:\n")
 
             get_property (ALREADY_SCANNED GLOBAL PROPERTY
-                          _POLYSQUARE_ALREADY_SCANNED_SOURCES)
+                          _PSQ_ALREADY_SCANNED_SOURCES)
 
             foreach (SOURCE ${ALREADY_SCANNED})
 
