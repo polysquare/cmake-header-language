@@ -6,7 +6,7 @@ CMake macro to determine the language of a header file.
 
 | Travis CI (Ubuntu) | AppVeyor (Windows) | Coverage | Biicode | Licence |
 |--------------------|--------------------|----------|---------|---------|
-|[![Travis](https://img.shields.io/travis/polysquare/cmake-header-language.svg)](http://travis-ci.org/polysquare/cmake-header-language)|[![AppVeyor](https://img.shields.io/appveyor/ci/smspillaz/cmake-header-language.svg)](https://ci.appveyor.com/project/smspillaz/cmake-header-language)|[![Coveralls](https://img.shields.io/coveralls/polysquare/cmake-header-language.svg)](http://coveralls.io/polysquare/cmake-header-language)|[![Biicode](https://webapi.biicode.com/v1/badges/smspillaz/smspillaz/cmake-header-language/master)](https://www.biicode.com/smspillaz/cmake-header-language)|[![License](https://img.shields.io/github/license/polysquare/cmake-header-language.svg)](http://github.com/polysquare/cmake-header-language)|
+|[![Travis](https://img.shields.io/travis/polysquare/cmake-header-language.svg)](http://travis-ci.org/polysquare/cmake-header-language)|[![AppVeyor](https://img.shields.io/appveyor/ci/smspillaz/cmake-determine-header-language.svg)](https://ci.appveyor.com/project/smspillaz/cmake-determine-header-language)|[![Coveralls](https://img.shields.io/coveralls/polysquare/cmake-header-language.svg)](http://coveralls.io/polysquare/cmake-header-language)|[![Biicode](https://webapi.biicode.com/v1/badges/smspillaz/smspillaz/cmake-header-language/master)](https://www.biicode.com/smspillaz/cmake-header-language)|[![License](https://img.shields.io/github/license/polysquare/cmake-header-language.svg)](http://github.com/polysquare/cmake-header-language)|
 
 ## Description ##
 
