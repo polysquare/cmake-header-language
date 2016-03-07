@@ -4,15 +4,7 @@
 # can be used to determine which language mode certain tools should run in.
 #
 # See /LICENCE.md for Copyright information
-if (NOT BIICODE)
-
-    set (CMAKE_MODULE_PATH
-         "${CMAKE_CURRENT_LIST_DIR}/bii/deps"
-         "${CMAKE_MODULE_PATH}")
-
-endif (NOT BIICODE)
-
-include ("smspillaz/cmake-include-guard/IncludeGuard")
+include ("cmake/cmake-include-guard/IncludeGuard")
 cmake_include_guard (SET_MODULE_PATH)
 
 include (CMakeParseArguments)

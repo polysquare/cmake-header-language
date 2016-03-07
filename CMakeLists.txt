@@ -3,31 +3,17 @@
 # Main entry point for PolysquareCMakeHeaderLanguageTests tests.
 #
 # See /LICENCE.md for Copyright information
-
-if (NOT CMAKE_SCRIPT_MODE_FILE)
-
-    project (PolysquareCMakeHeaderLanguageTests NONE)
-    set (NEW_POLICIES CMP0025 CMP0056)
-
-    foreach (POLICY ${NEW_POLICIES})
-
-        if (POLICY ${POLICY})
-
-            cmake_policy (SET ${POLICY} NEW)
-
-        endif ()
-
-    endforeach ()
-
-endif ()
+include ("${CMAKE_CURRENT_LIST_DIR}/conanbuildinfo.cmake")
+set (_CURRENT_LIST_FILE "${CMAKE_CURRENT_LIST_FILE}")
+set (CMAKE_MODULE_PATH
+     "${CMAKE_CURRENT_LIST_DIR}"
+     ${CONAN_CMAKE_MODULE_PATH}  # NOLINT:correctness/quotes
+     ${CMAKE_MODULE_PATH})  # NOLINT:correctness/quotes
 
 cmake_minimum_required (VERSION 2.8)
 
-set (_CURRENT_LIST_FILE "${CMAKE_CURRENT_LIST_FILE}")
-set (CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR};${CMAKE_MODULE_PATH}")
-
-include ("smspillaz/cmake-unit/CMakeUnitRunner")
-include ("smspillaz/cmake-unit/CMakeUnit")
+include ("cmake/cmake-unit/CMakeUnitRunner")
+include ("cmake/cmake-unit/CMakeUnit")
 include (DetermineHeaderLanguage)
 
 # Add source and header files in the following include hierarchy:
