@@ -12,8 +12,7 @@ set (CMAKE_MODULE_PATH
 
 cmake_minimum_required (VERSION 2.8)
 
-include ("cmake/cmake-unit/CMakeUnitRunner")
-include ("cmake/cmake-unit/CMakeUnit")
+include ("cmake/cmake-module-common/Common")
 include (DetermineHeaderLanguage)
 
 # Add source and header files in the following include hierarchy:
@@ -691,12 +690,13 @@ function (psq_test_source_was_header_true_for_header)
 
 endfunction ()
 
-cmake_unit_init (NAMESPACE "psq"
-                 COVERAGE_FILES
-                 "${CMAKE_CURRENT_LIST_DIR}/DetermineHeaderLanguage.cmake")
+set (CMAKE_FILES
+     "${CMAKE_CURRENT_LIST_DIR}/DetermineHeaderLanguage.cmake"
+     "${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt")
+set (MARKDOWN_FILES
+     "${CMAKE_CURRENT_LIST_DIR}/LICENSE.md"
+     "${CMAKE_CURRENT_LIST_DIR}/README.md")
 
-if (BIICODE)
-
-    add_bii_targets ()
-
-endif ()
+cmake_module_add_common_targets (NAMESPACE "psq"
+                                 CMAKE_FILES ${CMAKE_FILES}
+                                 DOCUMENTATION_FILES ${MARKDOWN_FILES})
