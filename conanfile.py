@@ -9,10 +9,17 @@ class CMakeHeaderLanguageConan(ConanFile):
     name = "cmake-header-language"
     version = os.environ.get("CONAN_VERSION_OVERRIDE", VERSION)
     generators = "cmake"
-    requires = ("cmake-include-guard/master@smspillaz/cmake-include-guard",
-                "cmake-unit/master@smspillaz/cmake-unit")
+    requires = ("cmake-include-guard/master@smspillaz/cmake-include-guard",)
     url = "http://github.com/polysquare/cmake-header-language"
     license = "MIT"
+    options = {
+        "dev": [True, False]
+    }
+    default_options = "dev=False"
+
+    def requirements(self):
+        if self.options.dev:
+            self.requires("cmake-module-common/master@smspillaz/cmake-module-common")
 
     def source(self):
         zip_name = "cmake-header-language.zip"
