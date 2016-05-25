@@ -13,6 +13,14 @@ class CMakeHeaderLanguageConan(ConanFile):
                 "cmake-unit/master@smspillaz/cmake-unit")
     url = "http://github.com/polysquare/cmake-header-language"
     license = "MIT"
+    options = {
+        "dev": [True, False]
+    }
+    default_options = "dev=False"
+
+    def requirements(self):
+        if self.options.dev:
+            self.requires("cmake-module-common/master@smspillaz/cmake-module-common")
 
     def source(self):
         zip_name = "cmake-header-language.zip"
